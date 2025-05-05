@@ -1,0 +1,23 @@
+{
+  "node_version": "20",
+  "graphs": {
+    "agent": "./agent.mts:graph",
+    "nested": "./nested.mts:graph",
+    "weather": "./weather.mts:graph",
+    "error": "./error.mts:graph",
+    "delay": "./delay.mts:graph",
+    "dynamic": "./dynamic.mts:graph",
+    "inmo_agent": "./inmo.mts:workflow",
+    "agent_simple": "./agent_simple.mts:graph",
+    "naturgy": "./naturgy.mts:workflow"
+  },
+  "ui": {
+    "inmo_agent": "./agent/ui.tsx"
+  },
+  "http": {
+    "app": "./http.mts:app"
+  },
+  "env": {
+    "LANGGRAPH_CONFIG": "{\"agent\": {\"configurable\": {\"model_name\": \"openai\"}}}"
+  }
+}
