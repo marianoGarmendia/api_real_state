@@ -14,7 +14,7 @@ import {
 } from "@langchain/langgraph/prebuilt";
 // import { tool } from "@langchain/core/tools";
 // import { z } from "zod";
-import  ComponentMap from "./agent/ui.js";
+// import  ComponentMap from "./agent/ui.js";
 import {
   typedUi,
   uiMessageReducer,
@@ -98,9 +98,9 @@ async function callModel(
   state: typeof newState.State,
   config: LangGraphRunnableConfig,
 ) {
-  const { messages , property } = state;
+  const { messages } = state;
 
-  const ui = typedUi(config);
+  // const ui = typedUi(config);
 
   
 
