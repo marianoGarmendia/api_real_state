@@ -65,11 +65,11 @@ export const productsFinder = tool(
       
       
       if (!products) {
-        return "No se encontraron productos que coincidan con tu búsqueda.";
+        return  {item: [] , message: new ToolMessage(`No se encontraron propiedades con esas caracteristicas`, toolCallId, "products_finder")};
       } else {
        
-    
-      return {item: products , message: new ToolMessage(`${products.length > 1 ? "He encontrado estas propiedades" : "He encontrado está propiedad"}`, toolCallId, "products_finder")}
+        const propiedades = JSON.stringify(products, null, 2);
+      return {item: [...products] , message: new ToolMessage(`${products.length > 1 ? `He encontrado estas propiedades: ${propiedades}` : `He encontrado está propiedad, ${propiedades}`}`, toolCallId, "products_finder")}
     
 
       }
@@ -77,7 +77,8 @@ export const productsFinder = tool(
 
       // // Emit UI elements associated with the AI message
     } catch (error) {
-      return "Ocurrió un error interno al procesar la búsqueda de productos.";
+      return {item: [] , message: new ToolMessage(`Hubo algún error al buscar la propeidad`, toolCallId, "products_finder")}
+      ;
     }
   },
   {

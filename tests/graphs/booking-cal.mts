@@ -62,7 +62,7 @@ export const createbookingTool = tool(
       });
 
       const isBooking = await response.json();
-      return isBooking;
+      return JSON.stringify(isBooking);
     } catch (error) {
       throw new Error("Error al crear la reserva: " + error);
     }
@@ -129,7 +129,7 @@ export const getAvailabilityTool = tool(
       if(horarios_disponibles.length === 0) {
         return "No hay horarios disponibles para la fecha seleccionada";
       }else{
-        return horarios_disponibles;
+        return JSON.stringify(horarios_disponibles);
 
       }
 

@@ -7,42 +7,46 @@
 // } from "../../../src/ui/Carousel.js";
 import "./styles.css";
 
-const PropertyCard: React.FC<Product> = (props:Product) => {
-  return (
-    <div className="max-w-[70%] px-6 bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 mx-2">
+export const PropertyCard: React.FC<Product> = (props) => (
+  <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 mx-2">
     <img
-        src={"https://media.ambito.com/p/0d7dcb42b3f914aa1a1dced3b943dfdc/adjuntos/239/imagenes/041/278/0041278247/inmobiliariajpg.jpg"}
-        alt={props.direccion}
-        className="h-48 w-full object-cover"
-      />
-      <div className="p-4">
-        <h3 className="text-lg font-semibold mb-1 line-clamp-1">
-          {props.ciudad}, {props.zona}
-        </h3>
-        <p className="text-gray-600 text-sm mb-2 line-clamp-2">
-          {props.direccion}
-        </p>
-        <div className="text-green-600 font-bold text-lg mb-2">
-          {props.moneda}{props.precio}
-        </div>
-        <div>
-          Baños: {props.banios} | Dormitorios: {props.dormitorios} |{" "}
-          Superficie: {props.m2utiles} m² | {props.tipo}
-          piscina: {props.piscina ? "Sí" : "No"}
-        </div>
-        <a
-          href={props.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:underline text-sm"
-        >
-          Ver publicación
-        </a>
+      src={"https://blog.wasi.co/wp-content/uploads/2019/07/claves-fotografia-inmobiliaria-exterior-casa-software-inmobiliario-wasi.jpg"}
+      alt={props.direccion}
+      className="h-48 w-full object-cover rounded-t-2xl"
+    />
+    <div className="p-4">
+      <h3 className="text-lg font-semibold mb-1 line-clamp-1">
+        {props.ciudad}, {props.zona}
+      </h3>
+      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+        {props.direccion}
+      </p>
+      <div className="text-green-600 font-bold text-lg mb-2">
+        {props.moneda}{" "} {props.precio}
       </div>
+      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+        Baños: {props.banios}
+      </p>
+      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+        Superficie: {props.m2utiles} m²
+      </p>
+      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+        Dormitorios: {props.dormitorios} 
+      </p>
+      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+        Piscina: {props.piscina ? 'Sí' : 'No'}
+      </p>
+      <a
+        href={props.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-blue-500 hover:underline text-sm"
+      >
+        Ver publicación
+      </a>
     </div>
-  )
-}
-
+  </div>
+);
 export default PropertyCard
 
 export interface Product {

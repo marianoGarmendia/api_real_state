@@ -29,7 +29,7 @@ import {
 } from "@langchain/langgraph";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
-import { TavilySearch } from "@langchain/tavily";
+// import { TavilySearch } from "@langchain/tavily";
 // import { ToolNode } from "@langchain/langgraph/prebuilt";
 // import { encode } from "gpt-3-encoder";
 import { createbookingTool, getAvailabilityTool } from "./booking-cal.mjs";
@@ -41,8 +41,6 @@ import { contexts } from "./contexts.mjs";
 import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
 
-
-
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
   context: contexts.clinica.context,
@@ -52,19 +50,14 @@ export const empresa = {
 // import * as dotenv from "dotenv";
 // dotenv.config();
 
-const tavilySearch = new TavilySearch({
-  tavilyApiKey: process.env.TAVILY_API_KEY,
-  description:
-    "Herramienta para buscar colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad",
-  name: "tavily_search",
-});
+// const tavilySearch = new TavilySearch({
+//   tavilyApiKey: process.env.TAVILY_API_KEY,
+//   description:
+//     "Herramienta para buscar colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad",
+//   name: "tavily_search",
+// });
 
-const tools = [
-  getAvailabilityTool,
-  createbookingTool,
-  tavilySearch,
-  productsFinder,
-];
+const tools = [getAvailabilityTool, createbookingTool, productsFinder];
 
 const stateAnnotation = MessagesAnnotation;
 
@@ -102,8 +95,6 @@ async function callModel(
 
   // const ui = typedUi(config);
 
-  
-
   // console.log("sumary agent en callModel");
   // console.log("-----------------------");
   // console.log(summary);
@@ -140,7 +131,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 - **No uses emojis**.
 - **Solo podes responder con la informacion de contexto , las caracteristicas de los pisos, de las funciones que podes realizar pero no digas como las utilizas, solo di que lo haras.**
 - Si el usuario menciona el mar o alguna zona específica que quiera saber que hay cerca de la casa o buscar una casa cerca de un colegio, cerca del mar o en alguna zona en particular, haz lo siguiente:
-- usa la herramienta “tavily_search” para ubicar la zona y buscar colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad.
+
 - Busca una propiedad cerca de la zona de busqueda y si hay colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad.
 
 ---
@@ -148,9 +139,9 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 ### 🛠️ Herramientas disponibles
 
 - Obtener_pisos_en_venta_dos: para buscar propiedades en venta.
-- get_availability_Tool: para verificar horarios disponibles para visitas.
-- create_booking_tool: para agendar la visita.
-- "tavily_search": para consultar información del clima, actividades o puntos de interés de una zona.
+- getAvailabilityTool: para verificar horarios disponibles para visitas.
+- createbookingTool: para agendar la visita. (No puedes agendar una visita si el usuario no ha visto una propiedad)
+
 - "products_finder": para buscar propiedades en venta y obtener información sobre ellas según la consulta del usuario.
 
 ### Saludo inicial:
@@ -171,7 +162,6 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 - Si el usuario no proporciona toda la información, hacé preguntas para obtenerla. Por ejemplo: "¿Cuántas habitaciones necesitas?" o "¿Cuál es tu presupuesto aproximado?".
 
 
-
 ### ℹ️ Información adicional
 
 - Hoy es **${new Date().toLocaleDateString()}** y la hora actual es **${new Date().toLocaleTimeString()}**.
@@ -184,8 +174,6 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 
   const response = await model.invoke([systemsMessage, ...messages]);
 
-
- 
   // console.log("response: ", response);
 
   // const cadenaJSON = JSON.stringify(messages);
@@ -193,11 +181,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
-
-  console.log("ui:  " , state.ui);
   console.log("repsonse ", response);
-  
-  
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
 
@@ -228,18 +212,17 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 //     }
 //   },
 
-function shouldContinue(state: typeof newState.State, config: LangGraphRunnableConfig) {
-  const { messages  } = state;
- 
+function shouldContinue(
+  state: typeof newState.State,
+  config: LangGraphRunnableConfig,
+) {
+  const { messages } = state;
 
   const lastMessage = messages[messages.length - 1] as AIMessage;
   // If the LLM makes a tool call, then we route to the "tools" node
   if (lastMessage?.tool_calls?.length) {
     return "tools";
   } else {
- 
-    
-
     console.log("end of conversation");
 
     return END;
@@ -314,6 +297,65 @@ function shouldContinue(state: typeof newState.State, config: LangGraphRunnableC
 //     url: "https://propiedades.winwintechbank.com/#/producto/1985",
 //   },
 // ];
+
+const humanNodeBooking = (lastMessage: AIMessage) => {
+  if (lastMessage.tool_calls) {
+    const toolArgs = lastMessage.tool_calls[0].args as {
+      name: string;
+      start: string;
+      email: string;
+    };
+    const { name, start, email } = toolArgs;
+    const actionRequest: ActionRequest = {
+      action: "Confirma la reserva",
+      args: toolArgs,
+    };
+
+    const description = `Por favor, confirma la reserva de la propiedad con los siguientes parámetros: ${JSON.stringify(
+      {
+        name,
+        start,
+        email,
+      },
+    )}`;
+
+    const interruptConfig: HumanInterruptConfig = {
+      allow_ignore: false, // Allow the user to `ignore` the interrupt
+      allow_respond: false, // Allow the user to `respond` to the interrupt
+      allow_edit: true, // Allow the user to `edit` the interrupt's args
+      allow_accept: true, // Allow the user to `accept` the interrupt's args
+    };
+
+    const request: HumanInterrupt = {
+      action_request: actionRequest,
+      config: interruptConfig,
+      description,
+    };
+
+    const humanResponse = interrupt<HumanInterrupt[], HumanResponse[]>([
+      request,
+    ])[0];
+
+    if (humanResponse.type === "response") {
+      const message = `User responded with: ${humanResponse.args}`;
+      return { interruptResponse: message, humanResponse: humanResponse.args };
+    } else if (humanResponse.type === "accept") {
+      const message = `User accepted with: ${JSON.stringify(humanResponse.args)}`;
+      return { interruptResponse: message, humanResponse: humanResponse };
+    } else if (humanResponse.type === "edit") {
+      const message = `User edited with: ${JSON.stringify(humanResponse.args)}`;
+      return { interruptResponse: message, humanResponse: humanResponse.args };
+    } else if (humanResponse.type === "ignore") {
+      const message = "User ignored interrupt.";
+      return { interruptResponse: message, humanResponse: humanResponse };
+    }
+
+    return {
+      interruptResponse:
+        "Unknown interrupt response type: " + JSON.stringify(humanResponse),
+    };
+  }
+};
 
 const humanNode = (lastMessage: any) => {
   const toolArgs = lastMessage.tool_calls[0].args as {
@@ -391,6 +433,12 @@ const humanNode = (lastMessage: any) => {
   };
 };
 
+interface booking {
+  name: string;
+  start: string;
+  email: string;
+}
+
 interface pisosToolArgs {
   habitaciones: string | null;
   precio_aproximado: string;
@@ -400,7 +448,10 @@ interface pisosToolArgs {
   tipo_operacion: "venta" | "alquiler";
 }
 
-const toolNodo = async (state: typeof newState.State, config:LangGraphRunnableConfig) => {
+const toolNodo = async (
+  state: typeof newState.State,
+  config: LangGraphRunnableConfig,
+) => {
   const { messages } = state;
   const ui = typedUi(config);
   const lastMessage = messages[messages.length - 1] as AIMessage;
@@ -411,7 +462,7 @@ const toolNodo = async (state: typeof newState.State, config:LangGraphRunnableCo
 
   let toolMessage: BaseMessageLike = "un tool message" as BaseMessageLike;
   if (lastMessage?.tool_calls?.length) {
-    const lastMessageID = lastMessage.id
+    const lastMessageID = lastMessage.id;
     const toolName = lastMessage.tool_calls[0].name;
     const toolArgs = lastMessage.tool_calls[0].args as pisosToolArgs & {
       query: string;
@@ -449,31 +500,92 @@ const toolNodo = async (state: typeof newState.State, config:LangGraphRunnableCo
     } else if (toolName === "universal_info_2025") {
       const res = await pdfTool.invoke(toolArgs);
       toolMessage = new ToolMessage(res, tool_call_id, "universal_info_2025");
-    } else if (toolName === "get_availability_Tool") {
+    } else if (toolName === "getAvailabilityTool") {
       const res = await getAvailabilityTool.invoke(toolArgs);
-      toolMessage = new ToolMessage(res, tool_call_id, "get_availability_Tool");
-    } else if (toolName === "create_booking_tool") {
-      const res = await createbookingTool.invoke(toolArgs);
-      toolMessage = new ToolMessage(res, tool_call_id, "create_booking_tool");
+      toolMessage = new ToolMessage(res, tool_call_id, "getAvailabilityTool");
+    } else if (toolName === "createbookingTool") {
+      const responseInterruptBooking = humanNodeBooking(lastMessage);
+      if (
+        responseInterruptBooking?.humanResponse &&
+        typeof responseInterruptBooking.humanResponse !== "string" &&
+        responseInterruptBooking.humanResponse.args
+      ) {
+        const toolArgsInterrupt = responseInterruptBooking.humanResponse
+          .args as ActionRequest;
+        console.log("tollArgsInterrupt: ", toolArgsInterrupt);
+        if (toolArgsInterrupt.args) {
+          const { name, start, email } = toolArgsInterrupt.args as booking;
+          const response = await createbookingTool.invoke({
+            name,
+            start,
+            email,
+          });
+          if (typeof response !== "string") {
+            toolMessage = new ToolMessage(
+              "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+              tool_call_id,
+              "createbookingTool",
+            );
+          } else {
+            toolMessage = new ToolMessage(
+              response,
+              tool_call_id,
+              "createbookingTool",
+            );
+          }
+        }else{
+          toolMessage = new ToolMessage(
+            "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+            tool_call_id,
+            "createbookingTool",)
+        }
+        
+       
+      }else{
+        toolMessage = new ToolMessage(
+          "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+          tool_call_id, 
+          "createbookingTool",
+        )
+      }
     } else if (toolName === "products_finder") {
       const res = await productsFinder.invoke({
         ...toolArgs,
         props: INMUEBLE_PROPS,
       } as any);
       toolMessage = res.message as ToolMessage;
+      console.log("res item: ", res.item);
+
       ui.push({
         name: "products-carousel",
-        props:{
-          items: res.item,
+        props: {
+          items: [...res.item],
           toolCallId: tool_call_id,
         },
-        metadata:{
-          message_id:lastMessageID
-        }
-      })
+        metadata: {
+          message_id: lastMessageID,
+        },
+      });
     }
   } else {
-    return { messages };
+    const toolMessages = lastMessage.tool_calls?.map((call) => {
+      return new ToolMessage(
+        "No pude gestionar esta herramienta, probemos de nuevo",
+        call.id as string,
+        `${call?.name}`,
+      );
+    });
+
+    if (!toolMessages || toolMessages.length === 0) {
+      toolMessage = new ToolMessage(
+        "No pude gestionar esta herramienta, probemos de nuevo",
+        lastMessage.id as string,
+        "error",
+      );
+      return { messages: [...messages, toolMessage] };
+    } else {
+      return { messages: [...messages, ...toolMessages] };
+    }
   }
   // tools.forEach((tool) => {
   //   if (tool.name === toolName) {
@@ -482,7 +594,7 @@ const toolNodo = async (state: typeof newState.State, config:LangGraphRunnableCo
   // });
   // console.log("toolMessage: ", toolMessage);
 
-  return {ui:ui.items,  messages: [...messages, toolMessage] };
+  return { ui: ui.items, messages: [...messages, toolMessage] };
 };
 
 // const delete_messages = async (state: typeof newState.State) => {
