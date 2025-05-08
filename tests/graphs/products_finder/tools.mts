@@ -10,9 +10,9 @@ import { buildFilter } from "./helpers.mjs";
 import { embeddingModel } from "./models.mjs";
 import { buildQueryFilterModel, buildQuerySchema } from "./schemas.mjs";
 import { workflow } from "../inmo.mjs";
-
-
-
+import { contextPrompt } from "./helpers.mjs";
+import { ChatOpenAI } from "@langchain/openai";
+import { LangGraphRunnableConfig } from "@langchain/langgraph";
 
 dotenv.config();
 
@@ -27,7 +27,6 @@ const findProducts = async (prompt: string, props: string[]) => {
   const querySchema = buildQuerySchema(props);
   const queryFilterModel = buildQueryFilterModel(querySchema);
   const rawQueryFilter = await queryFilterModel.invoke(prompt);
- 
 
   const filter = buildFilter(rawQueryFilter);
   const embeddedPrompt = await embeddingModel.embedQuery(prompt);
@@ -44,57 +43,111 @@ const findProducts = async (prompt: string, props: string[]) => {
 const BASE_URL = "https://propiedades.winwintechbank.com/#/producto";
 const buildUrl = (id: string | number) => `${BASE_URL}/${id}`;
 
-export const productsFinder = tool(
-  async ({ prompt, props }, config) => {
-    const state = await workflow.getState({
-      configurable: { thread_id: config.configurable.thread_id },
-    });
-    // const message_id = state.values.messages.at(-1).id
-    const toolCallId = state.values.messages.at(-1).tool_calls[0].id;
-   
-    // const ui = typedUi<typeof ComponentMap>(config);
+// export const productsFinder = tool(
+//   async ({ prompt, props }, config) => {
+//     const state = await workflow.getState({
+//       configurable: { thread_id: config.configurable.thread_id },
+//     });
+//     // const message_id = state.values.messages.at(-1).id
+//     const toolCallId = state.values.messages.at(-1).tool_calls[0].id;
 
-    try {
-      const rawProducts = await findProducts(prompt, props);
-      const products = rawProducts.map((product) => ({
-        ...product.metadata,
-        id: product.id,
-        url: buildUrl(product.id),
-      }));
-      
-      
-      
-      if (!products) {
-        return  {item: [] , message: new ToolMessage(`No se encontraron propiedades con esas caracteristicas`, toolCallId, "products_finder")};
-      } else {
-       
-        const propiedades = JSON.stringify(products, null, 2);
-      return {item: [...products] , message: new ToolMessage(`${products.length > 1 ? `He encontrado estas propiedades: ${propiedades}` : `He encontrado está propiedad, ${propiedades}`}`, toolCallId, "products_finder")}
-    
+//     // const ui = typedUi<typeof ComponentMap>(config);
 
-      }
+//     try {
+//       const rawProducts = await findProducts(prompt, props);
+//       const products = rawProducts.map((product) => ({
+//         ...product.metadata,
+//         id: product.id,
+//         url: buildUrl(product.id),
+//       }));
 
+//       if (!products) {
+//         return  {item: [] , message: new ToolMessage(`No se encontraron propiedades con esas caracteristicas`, toolCallId, "products_finder")};
+//       } else {
 
-      // // Emit UI elements associated with the AI message
-    } catch (error) {
-      return {item: [] , message: new ToolMessage(`Hubo algún error al buscar la propeidad`, toolCallId, "products_finder")}
-      ;
+//         const propiedades = JSON.stringify(products, null, 2);
+
+//           console.log("propiedades", propiedades);
+//           console.log("products", products);
+
+//       return {item: [...products] , message: new ToolMessage(`${products.length > 1 ? `He encontrado estas propiedades: ${propiedades} ` : `He encontrado está propiedad, ${propiedades}`}`, toolCallId, "products_finder")}
+
+//       }
+
+//       // // Emit UI elements associated with the AI message
+//     } catch (error) {
+//       return {item: [] , message: new ToolMessage(`Hubo algún error al buscar la propeidad`, toolCallId, "products_finder")}
+//       ;
+//     }
+//   },
+//   {
+//     name: "products_finder",
+//     description: "Obtiene una lista de productos disponibles en el sistema",
+//     schema: z.object({
+//       prompt: z
+//         .string()
+//         .describe("Consulta del usuario sobre el producto buscado"),
+//       props: z
+//         .array(z.string())
+//         .describe("Atributos del producto que se pueden filtrar"),
+//     }),
+//   },
+// );
+
+export const productsFinder = async ({ prompt, props, config }:{prompt:string , props: string[] , config: LangGraphRunnableConfig}) => {
+  const state = await workflow.getState({
+    configurable: { thread_id: config.configurable?.thread_id },
+  });
+  // const message_id = state.values.messages.at(-1).id
+  const toolCallId = state.values.messages.at(-1).tool_calls[0].id;
+
+  // const ui = typedUi<typeof ComponentMap>(config);
+
+  try {
+    const rawProducts = await findProducts(prompt, props);
+    const products = rawProducts.map((product) => ({
+      ...product.metadata,
+      id: product.id,
+      url: buildUrl(product.id),
+    }));
+
+    if (!products) {
+      return {
+        item: [],
+        message: new ToolMessage(
+          `No se encontraron propiedades con esas caracteristicas`,
+          toolCallId,
+          "products_finder",
+        ),
+      };
+    } else {
+      const propiedades = JSON.stringify(products, null, 2);
+
+      console.log("propiedades", propiedades);
+      console.log("products", products);
+
+      return {
+        item: [...products],
+        message: new ToolMessage(
+          `${products.length > 1 ? `He encontrado estas propiedades: ${propiedades} ` : `He encontrado está propiedad, ${propiedades}`}`,
+          toolCallId,
+          "evaluate_request",
+        ),
+      };
     }
-  },
-  {
-    name: "products_finder",
-    description: "Obtiene una lista de productos disponibles en el sistema",
-    schema: z.object({
-      prompt: z
-        .string()
-        .describe("Consulta del usuario sobre el producto buscado"),
-      props: z
-        .array(z.string())
-        .describe("Atributos del producto que se pueden filtrar"),
-    }),
-  },
-);
 
+    // // Emit UI elements associated with the AI message
+  } catch (error) {
+    return {
+      item: [],
+      message: new ToolMessage(
+        `Hubo algún error al buscar la propeidad`,
+        toolCallId,
+        "evaluate_request",
+      ),
+    };
+  }
+};
 // const product =  {
 //   agente: 'M&M .',
 //   alrededores: 'Bus:\nTren:\nRestaurantes:\nAeropuerto:',

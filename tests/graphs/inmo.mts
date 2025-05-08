@@ -1,17 +1,19 @@
 import {
   AIMessage,
   HumanMessage,
+  InvalidToolCall,
   SystemMessage,
   ToolMessage,
   type BaseMessageLike,
 } from "@langchain/core/messages";
 // import { v4 as uuidv4 } from "uuid";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+// import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
   ActionRequest,
   HumanInterrupt,
   HumanInterruptConfig,
   HumanResponse,
+  
 } from "@langchain/langgraph/prebuilt";
 // import { tool } from "@langchain/core/tools";
 import { z } from "zod";
@@ -27,6 +29,7 @@ import {
   MessagesAnnotation,
   StateGraph,
   interrupt,
+  Command
 } from "@langchain/langgraph";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
@@ -43,6 +46,8 @@ import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
 import {formatMessages} from "./format-messages.mjs";
 import { formatSchema } from "./format_schema.mjs";
+import {contextPrompt} from "./products_finder/helpers.mjs";
+
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
   context: contexts.clinica.context,
@@ -50,6 +55,8 @@ export const empresa = {
 
 // process.env.LANGCHAIN_CALLBACKS_BACKGROUND = "true";
 import * as dotenv from "dotenv";
+import { update } from "lodash-es";
+// import { tool, ToolSchemaBase } from "@langchain/core/tools";
 dotenv.config();
 
 // const tavilySearch = new TavilySearch({
@@ -59,25 +66,30 @@ dotenv.config();
 //   name: "tavily_search",
 // });
 
-const tools = [getAvailabilityTool, createbookingTool, productsFinder];
+// const tools = [getAvailabilityTool, createbookingTool];
 
 const stateAnnotation = MessagesAnnotation;
+
+interface toolSchema {
+  tool_name: string,
+  id:string
+}
 
 const newState = Annotation.Root({
   ...stateAnnotation.spec,
   summary: Annotation<string>,
   property: Annotation<object>,
-  request_property_finder: Annotation<string>,
+  request_property_finder: Annotation<toolSchema>,
   interruptResponse: Annotation<string>,
   ui: Annotation({ reducer: uiMessageReducer, default: () => [] }),
 });
 
-const llmGoogle = new ChatGoogleGenerativeAI({
-  model: "gemini-2.5",
-  streaming: false,
-  apiKey: process.env.GOOGLE_API_KEY,
-  temperature: 0,
-})
+// const llmGoogle = new ChatGoogleGenerativeAI({
+//   model: "gemini-2.5",
+//   streaming: false,
+//   apiKey: process.env.GOOGLE_API_KEY,
+//   temperature: 0,
+// })
 
 // export const llmGroq = new ChatGroq({
 //   model: "llama-3.3-70b-versatile",
@@ -89,11 +101,11 @@ const llmGoogle = new ChatGoogleGenerativeAI({
 // }).bindTools(tools);
 
 export const model = new ChatOpenAI({
-  model: "gpt-4.1",
+  model: "gpt-4o",
   streaming: false,
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
-}).bindTools(tools);
+})
 
 // const toolNode = new ToolNode(tools);
 
@@ -113,7 +125,20 @@ async function callModel(
     `
         Sos Carla, el Agente IA de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
 
-        Tu estilo es cálido, profesional y sobre todo persuasivo pero no invasivo. Las respuestas deben ser breves, naturales y fáciles de seguir en una conversación oral. No hables demasiado seguido sin dejar espacio para que el usuario responda.
+        ### INFORMACION CONTEXTUAL:
+        - La inmobiliaria se llama MYM y está ubicada en españa.
+        - Las propiedades son solo venta.
+        - No se agendan visitas para alquiler.
+        - No gestionan propiedades en alquiler
+        - No gestionan propiedades fuera de españa.
+
+        El contexto de la inmobiliria según su ubicación y zona de trabajo es :
+        ${contextPrompt}
+        -------------------
+
+
+
+        - Tu estilo es cálido, profesional y sobre todo persuasivo pero no invasivo. Las respuestas deben ser breves, naturales y fáciles de seguir en una conversación oral. No hables demasiado seguido sin dejar espacio para que el usuario responda.
 
         Saludo inicial:
 
@@ -140,16 +165,18 @@ async function callModel(
 
         Solo podés referir a las funciones y contexto disponible, sin explicar cómo se usan internamente.
 
+        ### REGLAS DE NEGOCIO:
+        - Primero que nada debes lograr que el usuario te confirme que está buscando propiedades, si no lo hace no puedes buscar propiedades.
+        - Si busca propiedades, analiza lo que busca y se breve y practico, no preguntes de más.
+        - Solamente despues de que haya visto propiedades puede proponer una visita antes no
+
        
 
         Precios en euros.
 
-        🛠️ Herramientas disponibles
-        products_finder: busca propiedades en venta según tu consulta.
+       
 
-        getAvailabilityTool: verifica horarios disponibles para visitas.
-
-        createbookingTool: agendá la visita (solo luego de que el usuario haya visto una propiedad).
+    
 
          ℹ️ Información adicional
         Hoy es ${new Date().toLocaleDateString()}, hora ${new Date().toLocaleTimeString()}.
@@ -160,6 +187,8 @@ async function callModel(
  `,
   );
 
+
+
   const response = await model.invoke([systemsMessage, ...messages]);
 
   // console.log("response: ", response);
@@ -169,7 +198,7 @@ async function callModel(
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
-  console.log("call model ",);
+  console.log("call model ", messages);
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
 
@@ -209,6 +238,9 @@ function shouldContinue(
   
 
   const lastMessage = messages[messages.length - 1] as AIMessage;
+
+  console.log("shouldContinue: ", lastMessage);
+  
   // If the LLM makes a tool call, then we route to the "tools" node
   if (lastMessage?.tool_calls?.length) {
     return "tools";
@@ -438,13 +470,19 @@ interface pisosToolArgs {
   tipo_operacion: "venta" | "alquiler";
 }
 
+let buscar = false
+
 const toolNodo = async (
   state: typeof newState.State,
   config: LangGraphRunnableConfig,
 ) => {
-  const { messages } = state;
+  const { messages , request_property_finder} = state;
   const ui = typedUi(config);
   const lastMessage = messages[messages.length - 1] as AIMessage;
+  console.log("lastMessage: ", lastMessage);
+  console.log("request_property_finder: ", request_property_finder);
+  
+  
   console.log("toolNodo");
   console.log("-----------------------");
   // console.log(lastMessage);
@@ -454,6 +492,7 @@ const toolNodo = async (
   if (lastMessage?.tool_calls?.length) {
     const lastMessageID = lastMessage.id;
     const toolName = lastMessage.tool_calls[0].name;
+    const toolCallId = lastMessage.tool_calls[0].id as string;
     const toolArgs = lastMessage.tool_calls[0].args as pisosToolArgs & {
       query: string;
     } & { startTime: string; endTime: string } & {
@@ -542,22 +581,24 @@ const toolNodo = async (
 
       const schemaToolArgs = await formatSchema(toolArgs)
 
-      const res = await productsFinder.invoke({
-        ...schemaToolArgs,
+      const res = await productsFinder({
+        prompt: schemaToolArgs.prompt,
         props: INMUEBLE_PROPS,
+        config:config
       } as any);
-      const responseTool = res as {item: any[] , message:ToolMessage}
+      const responseTool = res as {item :any[] , message:ToolMessage}
       toolMessage = responseTool.message;
+      // toolMessage = new ToolMessage("", request_property_finder.id , "evaluate_request")
       console.log("res item: ", responseTool.item );
 
       ui.push({
         name: "products-carousel",
         props: {
           items: [...responseTool.item],
-          toolCallId: tool_call_id,
+          toolCallId: toolCallId,
         },
         metadata: {
-          message_id: lastMessageID,
+          message_id: lastMessageID,  
         },
       });
     }
@@ -592,9 +633,18 @@ const toolNodo = async (
 };
 
 const evaluate = async (state: typeof newState.State) => {
-  const { messages, request_property_finder} = state;
+  const { messages , request_property_finder} = state;
 
  
+  if(buscar) {
+    
+    return new Command({
+      update:{
+        messages: [...messages],
+        request_property_finder: request_property_finder,
+      }
+    })
+  }
 
   const schema = z.object({
     habitaciones: z.string().nullable(),
@@ -613,7 +663,7 @@ const evaluate = async (state: typeof newState.State) => {
     temperature: 0,
   }).bindTools([{
     name: "evaluate_request",
-    description: "Evalua si el usuario ya tiene la información necesaria para buscar propiedades",
+    description: "Evalua si el usuario ya tiene la información necesaria para buscar propiedades y completa los campos necesarios",
     schema: schema
   }]).withConfig({tags: ["nostream"]});
 
@@ -633,24 +683,22 @@ const evaluate = async (state: typeof newState.State) => {
 
     const response = await llm.invoke(prompt)
   console.log("evaluate response: ", response);
-  
-   
-
+    
+    
+ 
   
 
     if(response.tool_calls && response.tool_calls.length > 0){
       console.log("response.tool_calls: ", response.tool_calls[0]);
       const {habitaciones, precio_aproximado, zona} = response.tool_calls[0].args as pisosToolArgs & {query: string}
 
-      if(!habitaciones || !precio_aproximado || !zona){
-        return { }}
+      if(habitaciones && precio_aproximado  && zona){
+       buscar = true
+       return {messages: [...messages, response], request_property_finder: response.tool_calls[0]}
+      }
 
-      return {  request_property_finder: response.tool_calls[0].args}
+     
     }
-
-    return {}
-
-   
 
 }
 
