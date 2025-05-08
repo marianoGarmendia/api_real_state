@@ -69,7 +69,7 @@ export const pdfTool = tool(
 
     // const content = docsFound.map((doc) => doc.pageContent);
     // const texto = content.join(" ");
-    // return texto;
+    return "texto";
   },
   {
     name: "universal_info_2025",

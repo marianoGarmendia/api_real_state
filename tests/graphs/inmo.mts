@@ -1,11 +1,12 @@
 import {
   AIMessage,
+  HumanMessage,
   SystemMessage,
   ToolMessage,
   type BaseMessageLike,
 } from "@langchain/core/messages";
 // import { v4 as uuidv4 } from "uuid";
-
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import {
   ActionRequest,
   HumanInterrupt,
@@ -13,7 +14,7 @@ import {
   HumanResponse,
 } from "@langchain/langgraph/prebuilt";
 // import { tool } from "@langchain/core/tools";
-// import { z } from "zod";
+import { z } from "zod";
 // import  ComponentMap from "./agent/ui.js";
 import {
   typedUi,
@@ -40,15 +41,16 @@ import { getPisos2, pdfTool } from "./pdf-loader_tool.mjs";
 import { contexts } from "./contexts.mjs";
 import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
-
+import {formatMessages} from "./format-messages.mjs";
+import { formatSchema } from "./format_schema.mjs";
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
   context: contexts.clinica.context,
 };
 
 // process.env.LANGCHAIN_CALLBACKS_BACKGROUND = "true";
-// import * as dotenv from "dotenv";
-// dotenv.config();
+import * as dotenv from "dotenv";
+dotenv.config();
 
 // const tavilySearch = new TavilySearch({
 //   tavilyApiKey: process.env.TAVILY_API_KEY,
@@ -65,9 +67,17 @@ const newState = Annotation.Root({
   ...stateAnnotation.spec,
   summary: Annotation<string>,
   property: Annotation<object>,
+  request_property_finder: Annotation<string>,
   interruptResponse: Annotation<string>,
   ui: Annotation({ reducer: uiMessageReducer, default: () => [] }),
 });
+
+const llmGoogle = new ChatGoogleGenerativeAI({
+  model: "gemini-2.5",
+  streaming: false,
+  apiKey: process.env.GOOGLE_API_KEY,
+  temperature: 0,
+})
 
 // export const llmGroq = new ChatGroq({
 //   model: "llama-3.3-70b-versatile",
@@ -79,7 +89,7 @@ const newState = Annotation.Root({
 // }).bindTools(tools);
 
 export const model = new ChatOpenAI({
-  model: "gpt-4o",
+  model: "gpt-4.1",
   streaming: false,
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
@@ -101,72 +111,50 @@ async function callModel(
 
   const systemsMessage = new SystemMessage(
     `
-  Sos Carla, el Agente IA de inmoboliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
-    
-Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. Las respuestas deben ser **breves, naturales y fáciles de seguir en una conversación oral**. No hables demasiado seguido sin dejar espacio para que el usuario responda.
+        Sos Carla, el Agente IA de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
 
-### 🧠 Comportamiento ideal:
-- Si encontrás varias propiedades relevantes, avisá cuántas son y **mencioná solo la zona de cada una**. Por ejemplo:  
-  “Encontré 3 propiedades que podrían interesarte. Una está en Gracia, otra en El Born y la tercera en Poblenou. ¿Querés que te cuente más sobre alguna en particular?”
+        Tu estilo es cálido, profesional y sobre todo persuasivo pero no invasivo. Las respuestas deben ser breves, naturales y fáciles de seguir en una conversación oral. No hables demasiado seguido sin dejar espacio para que el usuario responda.
 
-- Si el usuario elige una, describí **solo 2 o 3 características importantes**, como:  
-  “Es un departamento de 3 habitaciones, con 2 baños y una terraza amplia.”  
-  Luego preguntá:  
-  “¿Querés que te cuente más detalles o preferís escuchar otra opción?”
+        Saludo inicial:
 
-- **Siempre ayudalo a avanzar**. Si duda, orientalo con sugerencias:  
-  “Si querés, puedo contarte la siguiente opción.”
+        “Hola, soy Carla, Agente IA de la inmobiliaria MYM. quiero ayduarte a resolver todas tus consultas, ¿cual es tu nombre?”
+        ( Cuanbdo el usuario responde, lo saludas por su nombre y le preguntas en que podes ayudarlo/a)
 
-- Cuando haya interés en una propiedad, preguntá su disponibilidad para una visita y usá las herramientas correspondientes para consultar horarios y agendar.
+        🧱 Reglas de conversación
 
----
+        - Analiza el mensaje del ususario y respondé con un mensaje claro y directo.
+        
+        - Si el usuario pregunta por una propiedad, ten en cuenta el contenido de su mensaje y preguntale por los detalles o caracteristicas de la propiedad que busca.
+  
+        - Si el usuario pregunta por la inmobiliaria, por la empresa o por los servicios, respondé con información breve y clara sobre la inmobiliaria y los servicios que ofrece. No hables de más, no es necesario. remarca que la inmobiliaria es MYM y que lo ayudará a encontrar lo que busca.
 
-### 🧱 Reglas de conversación
+        Una pregunta por vez, no respondas con textos largos ni te vayas de la conversación, el objetivo es concretar una venta.
 
-- **No hagas preguntas múltiples**. Preguntá una cosa por vez: primero la zona, después el presupuesto, después habitaciones, despues metros cuadrados , piscina etc.
-- **No repitas lo que el usuario ya dijo**. Escuchá con atención y respondé directo al punto.
-- **No inventes información**. Si algo no lo sabés, ofrecé buscarlo o contactar a un asesor.
-- **No agendes visitas para propiedades en alquiler.**
-- **Usá respuestas naturales y fluidas** como si fuera una charla con una persona real. Evitá frases técnicas o robotizadas.
-- **No uses emojis**.
-- **Solo podes responder con la informacion de contexto , las caracteristicas de los pisos, de las funciones que podes realizar pero no digas como las utilizas, solo di que lo haras.**
-- Si el usuario menciona el mar o alguna zona específica que quiera saber que hay cerca de la casa o buscar una casa cerca de un colegio, cerca del mar o en alguna zona en particular, haz lo siguiente:
+        No repitas lo que el usuario ya dijo; respondé directo al punto.
 
-- Busca una propiedad cerca de la zona de busqueda y si hay colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad.
+        No inventes información; si no lo sabés, pidele disculpas y dile que podrás ayudarlo con algo más.
 
----
+        No agendes visitas para alquiler.
 
-### 🛠️ Herramientas disponibles
+        Natural y fluido: como si fuera una charla real, sin tecnicismos ni emojis.
 
-- Obtener_pisos_en_venta_dos: para buscar propiedades en venta.
-- getAvailabilityTool: para verificar horarios disponibles para visitas.
-- createbookingTool: para agendar la visita. (No puedes agendar una visita si el usuario no ha visto una propiedad)
+        Solo podés referir a las funciones y contexto disponible, sin explicar cómo se usan internamente.
 
-- "products_finder": para buscar propiedades en venta y obtener información sobre ellas según la consulta del usuario.
+       
 
-### Saludo inicial:
+        Precios en euros.
 
-- "Hola, soy Carla, Agente IA de la inmobiliaria MYM. ¿Estás pensando en comprar una propiedad?, puedo ayudarte a encontrar la mejor opción!!
+        🛠️ Herramientas disponibles
+        products_finder: busca propiedades en venta según tu consulta.
 
+        getAvailabilityTool: verifica horarios disponibles para visitas.
 
+        createbookingTool: agendá la visita (solo luego de que el usuario haya visto una propiedad).
 
----
+         ℹ️ Información adicional
+        Hoy es ${new Date().toLocaleDateString()}, hora ${new Date().toLocaleTimeString()}.
 
-### REGLAS PARA RECOPILACION DE INFORMACION PARA HERRAMIENTAS
-- "products_finder" (para buscar propiedades en venta y obtener información sobre ellas según la consulta del usuario):
-- query: string (consulta del usuario sobre la propiedad buscada).
-- Para armar la consulta, tené en cuenta lo siguiente:
-- número de habitaciones, ubicacion, metros cuadrados, piscina, precio aproximado
-- Esa información debes detectarla de la consulta del ususario
-- intenta que esté lo mas completa posible antes de armar la "query" de consulta.
-- Si el usuario no proporciona toda la información, hacé preguntas para obtenerla. Por ejemplo: "¿Cuántas habitaciones necesitas?" o "¿Cuál es tu presupuesto aproximado?".
-
-
-### ℹ️ Información adicional
-
-- Hoy es **${new Date().toLocaleDateString()}** y la hora actual es **${new Date().toLocaleTimeString()}**.
-- Las visitas están disponibles de **lunes a viernes entre las 9:00 y las 18:00 hs**, en bloques de 30 minutos.
-- Todos los precios están en **euros**.
+        Visitas: lunes a viernes, 9:00–18:00 en bloques de 30 min.
 
   
  `,
@@ -181,7 +169,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
-  console.log("repsonse ", response);
+  console.log("call model ",);
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
 
@@ -216,7 +204,9 @@ function shouldContinue(
   state: typeof newState.State,
   config: LangGraphRunnableConfig,
 ) {
-  const { messages } = state;
+  const { messages , request_property_finder} = state;
+
+  
 
   const lastMessage = messages[messages.length - 1] as AIMessage;
   // If the LLM makes a tool call, then we route to the "tools" node
@@ -548,18 +538,22 @@ const toolNodo = async (
           "createbookingTool",
         )
       }
-    } else if (toolName === "products_finder") {
+    } else if (toolName === "evaluate_request") {
+
+      const schemaToolArgs = await formatSchema(toolArgs)
+
       const res = await productsFinder.invoke({
-        ...toolArgs,
+        ...schemaToolArgs,
         props: INMUEBLE_PROPS,
       } as any);
-      toolMessage = res.message as ToolMessage;
-      console.log("res item: ", res.item);
+      const responseTool = res as {item: any[] , message:ToolMessage}
+      toolMessage = responseTool.message;
+      console.log("res item: ", responseTool.item );
 
       ui.push({
         name: "products-carousel",
         props: {
-          items: [...res.item],
+          items: [...responseTool.item],
           toolCallId: tool_call_id,
         },
         metadata: {
@@ -597,85 +591,78 @@ const toolNodo = async (
   return { ui: ui.items, messages: [...messages, toolMessage] };
 };
 
-// const delete_messages = async (state: typeof newState.State) => {
-//   const { messages, summary } = state;
-//   console.log("delete_messages");
-//   console.log("-----------------------");
+const evaluate = async (state: typeof newState.State) => {
+  const { messages, request_property_finder} = state;
 
-//   console.log(messages);
+ 
 
-//   let summary_text = "";
+  const schema = z.object({
+    habitaciones: z.string().nullable(),
+    precio_aproximado: z.string(),
+    zona: z.string(),
+    superficie_total: z.string().nullable(),
+    piscina: z.enum(["si", "no"]).nullable(),
+    tipo_operacion: z.enum(["venta"]).describe("Tipo de operación"),
+    query: z.string().describe("Consulta del usuario"),
+  })
 
-//   let messages_parsed: any[] = [];
-//   messages_parsed = messages.map((message) => {
-//     if (message instanceof AIMessage) {
-//       return {
-//         ...messages_parsed,
-//         role: "assistant",
-//         content: message.content,
-//       };
-//     }
-//     if (message instanceof HumanMessage) {
-//       return { ...messages_parsed, role: "Human", content: message.content };
-//     }
-//   });
+  const llm = new ChatOpenAI({
+    model: "gpt-4o",
+    streaming: false,
+    apiKey: process.env.OPENAI_API_KEY,
+    temperature: 0,
+  }).bindTools([{
+    name: "evaluate_request",
+    description: "Evalua si el usuario ya tiene la información necesaria para buscar propiedades",
+    schema: schema
+  }]).withConfig({tags: ["nostream"]});
 
-//   // 1. Filtrar elementos undefined
-//   const filteredMessages = messages_parsed.filter(
-//     (message) => message !== undefined
-//   );
+  const conversation = formatMessages(messages);
 
-//   // 2. Formatear cada objeto
-//   const formattedMessages = filteredMessages.map(
-//     (message) => `${message.role}: ${message.content}`
-//   );
+  const prompt =`Eres un agente de ventas inmobiliarias y según el siguiente contexto de conversación debes evaluar si ya está todo listo para buscar propiedades, falta información o si el usuario no está buscando propiedades. vas a tener una herramienta para busqueda de propiedades si consideras utilizar
+  Para poder utilziar la herramienta de busqueda de propiedades, el usuario debe haber dado al menos la información para comlpetar los siguientes campos:
 
-//   // 3. Unir las cadenas con un salto de línea
-//   const prompt_to_messages = formattedMessages.join("\n");
+  habitaciones, precio_aproximado, y zona.
 
-//   if (messages.length > 3) {
-//     if (!summary) {
-//       const intructions_summary = `Como asistente de inteligencia artificial, tu tarea es resumir los siguientes mensajes para mantener el contexto de la conversación. Por favor, analiza cada mensaje y elabora un resumen conciso que capture la esencia de la información proporcionada, asegurándote de preservar el flujo y coherencia del diálogo
-//         mensajes: ${prompt_to_messages}
-//         `;
+  Sin esos 3 campos obligatorios no puedes buscar propiedades
 
-//       const summary_message = await model.invoke(intructions_summary);
-//       summary_text = summary_message.content as string;
-//     } else {
-//       const instructions_with_summary = `"Como asistente de inteligencia artificial, tu tarea es resumir los siguientes mensajes para mantener el contexto de la conversación y además tener en cuenta el resumen previo de dicha conversación. Por favor, analiza cada mensaje y el resumen y elabora un nuevo resumen conciso que capture la esencia de la información proporcionada, asegurándote de preservar el flujo y coherencia del diálogo.
+    El contexto de la conversacion es este hisotrial de mensajes entre el usuario y tu.
+    contexto: ${conversation}
+   
+    `
 
-//       mensajes: ${prompt_to_messages}
+    const response = await llm.invoke(prompt)
+  console.log("evaluate response: ", response);
+  
+   
 
-//       resumen previo: ${summary}
+  
 
-//       `;
+    if(response.tool_calls && response.tool_calls.length > 0){
+      console.log("response.tool_calls: ", response.tool_calls[0]);
+      const {habitaciones, precio_aproximado, zona} = response.tool_calls[0].args as pisosToolArgs & {query: string}
 
-//       const summary_message = await model.invoke(instructions_with_summary);
+      if(!habitaciones || !precio_aproximado || !zona){
+        return { }}
 
-//       summary_text = summary_message.content as string;
-//     }
+      return {  request_property_finder: response.tool_calls[0].args}
+    }
 
-//     const mssageReduced = messages.slice(0, -3).map((message) => {
-//       return new RemoveMessage({ id: message.id as string });
-//     });
+    return {}
 
-//     const messagesChecked = ensureToolCallsHaveResponses(mssageReduced);
+   
 
-//     return {
-//       messages: [...messagesChecked],
-//       summary: summary_text,
-//     };
-//   }
-//   return { messages };
-// };
+}
 
 const graph = new StateGraph(newState);
 
 graph
   .addNode("agent", callModel)
   .addNode("tools", toolNodo)
+  .addNode("evaluate", evaluate)
   .addEdge("__start__", "agent")
-  .addConditionalEdges("agent", shouldContinue)
+  .addEdge("agent", "evaluate")
+  .addConditionalEdges("evaluate" , shouldContinue )
   .addEdge("tools", "agent");
 
 const checkpointer = new MemorySaver();
