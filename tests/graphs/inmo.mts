@@ -42,7 +42,7 @@ import { contexts } from "./contexts.mjs";
 import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
 import { contextPrompt } from "./agent/context.mjs";
-import { normalize } from "path";
+
 
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
