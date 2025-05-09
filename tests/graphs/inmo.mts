@@ -42,6 +42,7 @@ import { contexts } from "./contexts.mjs";
 import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
 import { contextPrompt } from "./agent/context.mjs";
+import { normalize } from "path";
 
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
@@ -390,10 +391,27 @@ const humanNodeBooking = (lastMessage: AIMessage) => {
       args: toolArgs,
     };
 
+    
+
+    const date = new Date(start);
+
+      // Fecha y hora completas
+        const stringNormalized = 
+        date.toLocaleString('es-ES', {
+          day:   '2-digit',
+          month: '2-digit',
+          year:  'numeric',
+          hour:   '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+
+
+
     const description = `Por favor, confirma la reserva de la propiedad con los siguientes parámetros: ${JSON.stringify(
       {
         name,
-        start,
+        stringNormalized,
         email,
       },
     )}`;
