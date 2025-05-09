@@ -34,7 +34,7 @@ import { ChatOpenAI } from "@langchain/openai";
 // import { ToolNode } from "@langchain/langgraph/prebuilt";
 // import { encode } from "gpt-3-encoder";
 import { createbookingTool, getAvailabilityTool } from "./booking-cal.mjs";
-import { getPisos2, pdfTool } from "./pdf-loader_tool.mjs";
+import { getPisos2 } from "./pdf-loader_tool.mjs";
 // import { ensureToolCallsHaveResponses } from "./ensure-tool-response.mjs";
 // import { getUniversalFaq, noticias_y_tendencias } from "./firecrawl";
 
