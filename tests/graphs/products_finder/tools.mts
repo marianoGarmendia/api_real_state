@@ -87,10 +87,10 @@ export const  productsFinder = tool(
     schema: z.object({
       prompt: z
         .string()
-        .describe("Consulta del usuario sobre el producto buscado"),
+        .describe("Consulta del usuario sobre la propiedad buscada"),
       props: z
         .array(z.string())
-        .describe("Atributos del producto que se pueden filtrar"),
+        .describe("Atributos del producto que se pueden filtrar, deben ser una lista de strings de una palabra como, 'banios', 'dormitorios', 'piscina', 'm2constr', 'm2terraza', 'nascensor', 'num_terrazas', 'precio'"),
     }),
   },
 );

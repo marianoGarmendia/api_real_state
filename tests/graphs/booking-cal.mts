@@ -55,7 +55,7 @@ export const createbookingTool = tool(
         body: JSON.stringify({
           attendee: {
             name: name,
-            timeZone: "America/Santiago",
+            timeZone: "Europe/Madrid",
             language: "es",
             email: email,
           },
@@ -120,7 +120,7 @@ export const getAvailabilityTool = tool(
           const fechaOriginal = new Date(slot.time);
           // Restar 3 horas (3 * 60 * 60 * 1000 milisegundos)
           const fechaAjustada = new Date(
-            fechaOriginal.getTime() - 3 * 60 * 60 * 1000
+            fechaOriginal.getTime() 
           );
           // Formatear la fecha ajustada a una cadena ISO y agregar al array
           horarios_disponibles.push(fechaAjustada.toISOString());

@@ -59,6 +59,11 @@ export const empresa = {
 //   name: "tavily_search",
 // });
 
+const hora_actual = new Date().toLocaleTimeString('es-ES')
+
+console.log(hora_actual);
+
+
 const tools = [getAvailabilityTool, createbookingTool, productsFinder];
 
 const stateAnnotation = MessagesAnnotation;
@@ -123,9 +128,13 @@ async function callModel(
     
 Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. Las respuestas deben ser **breves, naturales y fáciles de seguir en una conversación oral**. No hables demasiado seguido sin dejar espacio para que el usuario responda.
 
+  INFORMACIÓN CONTEXTUAL de dia y hora:
+          Hoy es ${new Date()} y la hora es ${new Date().toLocaleTimeString()} 
+          - Hora y dia completo ${new Date().toUTCString()}
+
 ### 🧠 Comportamiento ideal:
-- Si encontrás varias propiedades relevantes, avisá cuántas son y **mencioná solo la zona de cada una**. Por ejemplo:  
-  “Encontré 3 propiedades que podrían interesarte. Una está en Gracia, otra en El Born y la tercera en Poblenou. ¿Querés que te cuente más sobre alguna en particular?”
+- Cuando encuentres propiedades, describe el titulo la zona y el precio y dile:
+- Te he compartido arriba de este mensaje una lista de propeidades con las caracteristicas y el link para verlas.
 
 - Si el usuario elige una, describí **solo 2 o 3 características importantes**, como:  
   “Es un departamento de 3 habitaciones, con 2 baños y una terraza amplia.”  
@@ -195,17 +204,33 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 
         Solo podés referir a las funciones y contexto disponible, sin explicar cómo se usan internamente.
 
+        - Puedes mencionar que dia y que hora es
+
         ### REGLAS DE NEGOCIO:
         - Primero que nada debes lograr que el usuario te confirme que está buscando propiedades, si no lo hace no puedes buscar propiedades.
         - Si busca propiedades, analiza lo que busca y se breve y practico, no preguntes de más.
         - Solamente despues de que haya visto propiedades puede proponer una visita antes no
 
         ### HERRRAMIENTAS DISPONIBLES:
-        - "products_finder" para buscar propiedades en venta.
-        - "getAvailabilityTool" para consultar disponibilidad de horarios para visitas.
-        - "createbookingTool" para agendar visitas a propiedades.
+        - "products_finder" para buscar propiedades en venta. el schema que recibe de entrada es:
+         - "prompt" para la consulta del usuario sobre el producto buscado.
+         - "props" para los atributos del producto que se pueden filtrar, como "banios", "dormitorios", "piscina", "m2constr", "m2terraza", "nascensor", "num_terrazas", "precio". *Siempre ES PARA VENTA* NUNCA PARA ALQUILER.
+         IMPORTANTE: Debes identificar al menos 3 caracteristicas en la conversacion o consulta para llamar a esta herramienta, si no lo haces no la llames. las caracteristicas pueden ser: dormitorios,  precio, m2 construidos. o sino preguntale que es lo más relevante para él y que lo detalle lo mejor posible, ya que con ello mejoraras la calidad de la búsqueda.
+         
+         
 
-        Debes usarla en ese orden, primero buscar propiedades y luego consultar disponibilidad de horarios para visitas. si es que el usuario lo deseaa
+        - "getAvailabilityTool" para consultar disponibilidad de horarios para visitas. DEBES USARLA DESPUES DE QUE EL USUARIO HAYA VISTO LAS PROPIEDADES Y QUIERA AGENDAR UNA VISITA. CON EL SCHEMA: 
+        
+         - "startTime" para la fecha y hora de inicio de la disponibilidad en formato ISO 8601, Ejemplo: 2025-02-13T16:00:00.000Z
+         - "endTime" para la fecha y hora de fin de la disponibilidad en formato ISO 8601, (Ej: 2025-02-13T16:00:00.000Z)
+
+
+        - "createbookingTool" para agendar visitas a propiedades.DEBES USARLA CON EL SIGUIENTE SCHEMA:
+          - "name" para el nombre del usuario
+          - "start" para la fecha y hora de inicio de la visita en formato ISO 8601, Ejemplo: 2025-02-13T16:00:00.000Z
+          - "email" para el email del usuario
+
+        *Debes usarla en ese orden, primero buscar propiedades y luego consultar disponibilidad de horarios para visitas. si es que el usuario lo desea*
 
         ### ACCIONES DESPUES DE MOSTRAR LAS PROPIEDADES:
         -  Preguntar que desea hacer el usuario, si quiere ver más propiedades, si quiere agendar una visita o si tiene alguna otra consulta.
@@ -229,9 +254,10 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
           contexto: ${conversation}
 
 
-          INFORMACIÓN CONTEXTUAL:
-          Hoy es ${fechaMadrid
-          }
+          INFORMACIÓN CONTEXTUAL de dia y hora:
+          Hoy es ${new Date()} y la hora es ${new Date().toLocaleTimeString()} 
+
+
     `,
   );
 
@@ -628,7 +654,7 @@ const toolNodo = async (
         metadata: {
           message_id: lastMessageID,
         },
-      }, {message: lastMessage});
+      });
     }
   } else {
     const toolMessages = lastMessage.tool_calls?.map((call) => {
