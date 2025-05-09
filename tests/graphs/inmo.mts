@@ -56,6 +56,8 @@ export const empresa = {
 import * as dotenv from "dotenv";
 import { update } from "lodash-es";
 import { timeStamp } from "node:console";
+import { vi } from "vitest";
+import { get } from "node:http";
 // import { tool, ToolSchemaBase } from "@langchain/core/tools";
 dotenv.config();
 
@@ -232,27 +234,27 @@ async function callModel(
 //     }
 //   },
 
-function shouldContinue(
-  state: typeof newState.State,
-  config: LangGraphRunnableConfig,
-) {
-  const { messages, request_property } = state;
+// function shouldContinue(
+//   state: typeof newState.State,
+//   config: LangGraphRunnableConfig,
+// ) {
+//   const { messages, request_property } = state;
 
-  const lastMessage = messages[messages.length - 1] as AIMessage;
+//   const lastMessage = messages[messages.length - 1] as AIMessage;
 
-  console.log("shouldContinue: ", lastMessage);
+//   console.log("shouldContinue: ", lastMessage);
 
-  // If the LLM makes a tool call, then we route to the "tools" node
-  if (lastMessage?.tool_calls?.length) {
-    return "tools";
-  } else {
-    console.log("end of conversation");
+//   // If the LLM makes a tool call, then we route to the "tools" node
+//   if (lastMessage?.tool_calls?.length) {
+//     return "tools";
+//   } else {
+//     console.log("end of conversation");
 
-    return END;
-  }
+//     return END;
+//   }
 
-  // Otherwise, we stop (reply to the user)
-}
+//   // Otherwise, we stop (reply to the user)
+// }
 
 // const products = [
 //   {
@@ -471,7 +473,6 @@ interface pisosToolArgs {
   tipo_operacion: "venta" | "alquiler";
 }
 
-let buscar = false;
 
 const toolNodo = async (
   state: typeof newState.State,
@@ -662,7 +663,69 @@ const evaluate = async (state: typeof newState.State) => {
 
   const conversation = formatMessages(messages);
 
-  const prompt = `Eres un agente de ventas d la imobiliaria MYM, el usuario está en busqueda una propiedad en venta, su consulta puede ser variada, puede preguntar por una zona, por cantidad de dormitorios, por precio, por piscina, por m2, por una propiedad en particular o por una propiedad en general, puede llegar a ser muy amplia o muy especifica la descripcion, debes ser capaz de recopilar la información relevante para poder utilizar la herramienta para la busqueda de propiedades.
+  const prompt = `
+  Sos Carla, el Agente IA de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
+
+        ### INFORMACION CONTEXTUAL:
+        - La inmobiliaria se llama MYM y está ubicada en españa.
+        - Las propiedades son solo venta.
+        - No se agendan visitas para alquiler.
+        - No gestionan propiedades en alquiler
+        - No gestionan propiedades fuera de españa.
+
+        El contexto de la inmobiliria según su ubicación y zona de trabajo es :
+        ${contextPrompt}
+        -------------------
+
+
+
+        - Tu estilo es cálido, profesional y sobre todo persuasivo pero no invasivo. Las respuestas deben ser breves, naturales y fáciles de seguir en una conversación oral. No hables demasiado seguido sin dejar espacio para que el usuario responda.
+
+        Saludo inicial:
+
+        “Hola, soy Carla, Agente IA de la inmobiliaria MYM. quiero ayduarte a resolver todas tus consultas, ¿cual es tu nombre?”
+        ( Cuanbdo el usuario responde, lo saludas por su nombre y le preguntas en que podes ayudarlo/a)
+
+        🧱 Reglas de conversación
+
+        - Analiza el mensaje del ususario y respondé con un mensaje claro y directo.
+        
+        - Si el usuario pregunta por una propiedad, ten en cuenta el contenido de su mensaje y preguntale por los detalles o caracteristicas de la propiedad que busca.
+  
+        - Si el usuario pregunta por la inmobiliaria, por la empresa o por los servicios, respondé con información breve y clara sobre la inmobiliaria y los servicios que ofrece. No hables de más, no es necesario. remarca que la inmobiliaria es MYM y que lo ayudará a encontrar lo que busca.
+
+        Una pregunta por vez, no respondas con textos largos ni te vayas de la conversación, el objetivo es concretar una venta.
+
+        No repitas lo que el usuario ya dijo; respondé directo al punto.
+
+        No inventes información; si no lo sabés, pidele disculpas y dile que podrás ayudarlo con algo más.
+
+        No agendes visitas para alquiler.
+
+        Natural y fluido: como si fuera una charla real, sin tecnicismos ni emojis.
+
+        Solo podés referir a las funciones y contexto disponible, sin explicar cómo se usan internamente.
+
+        ### REGLAS DE NEGOCIO:
+        - Primero que nada debes lograr que el usuario te confirme que está buscando propiedades, si no lo hace no puedes buscar propiedades.
+        - Si busca propiedades, analiza lo que busca y se breve y practico, no preguntes de más.
+        - Solamente despues de que haya visto propiedades puede proponer una visita antes no
+
+       
+
+        Precios en euros.
+
+       
+
+    
+
+         ℹ️ Información adicional
+        Hoy es ${new Date().toLocaleDateString()}, hora ${new Date().toLocaleTimeString()}.
+
+        Visitas: lunes a viernes, 9:00–18:00 en bloques de 30 min.
+  
+    
+  Eres un agente de ventas d la imobiliaria MYM, el usuario está en busqueda una propiedad en venta, su consulta puede ser variada, puede preguntar por una zona, por cantidad de dormitorios, por precio, por piscina, por m2, por una propiedad en particular o por una propiedad en general, puede llegar a ser muy amplia o muy especifica la descripcion, debes ser capaz de recopilar la información relevante para poder utilizar la herramienta para la busqueda de propiedades.
   Para ellos debes recopialr datos como:
   cantidad de dormitorios, cantidad de baños, precio aproximado, zona, piscina, m2 construidos, m2 terraza, si es una propiedad en venta o alquiler.
   No necesiariamente deben estar todos, pero si los más importantes que el ususario considere relevantes.
@@ -692,6 +755,11 @@ const evaluate = async (state: typeof newState.State) => {
       messages: [...messages, toolMessage],
       request_property: response.tool_calls[0].args as inputInmuble,
     };
+  }
+
+  return {
+    messages: [...messages, response],
+    request_property: null,
   }
 };
 
@@ -774,16 +842,166 @@ const callTool = async (
 };
 
 const classify = async (state: typeof newState.State) => {
-  const {request_property} = state
+  const {request_property, messages} = state
+
+  if(!request_property){
+    return {}
+  }
+
   
+  
+  const llm = new ChatOpenAI({
+    model: "gpt-4o",
+    temperature: 0,
+    apiKey: process.env.OPENAI_API_KEY,
+  }).bindTools(  [
+    getAvailabilityTool,
+    createbookingTool,
+  ],
+  {
+    
+  },).withConfig({
+    tags: ["nostream"],})
+
+    const prompt =`
+
+      INFORMACIÓN DE CONTEXTO:
+         Sos Carla, el Agente IA de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
+
+        ### INFORMACION CONTEXTUAL:
+        - La inmobiliaria se llama MYM y está ubicada en españa.
+        - Las propiedades son solo venta.
+        - No se agendan visitas para alquiler.
+        - No gestionan propiedades en alquiler
+        - No gestionan propiedades fuera de españa.
+
+        El contexto de la inmobiliria según su ubicación y zona de trabajo es :
+        ${contextPrompt}
+        -------------------
+
+        - Tu estilo es cálido, profesional y sobre todo persuasivo pero no invasivo. Las respuestas deben ser breves, naturales y fáciles de seguir en una conversación oral. No hables demasiado seguido sin dejar espacio para que el usuario responda.
+
+        Saludo inicial:
+
+        “Hola, soy Carla, Agente IA de la inmobiliaria MYM. quiero ayduarte a resolver todas tus consultas, ¿cual es tu nombre?”
+        ( Cuanbdo el usuario responde, lo saludas por su nombre y le preguntas en que podes ayudarlo/a)
+
+        🧱 Reglas de conversación
+
+        - Analiza el mensaje del ususario y respondé con un mensaje claro y directo.
+        
+        - Si el usuario pregunta por una propiedad, ten en cuenta el contenido de su mensaje y preguntale por los detalles o caracteristicas de la propiedad que busca.
+  
+        - Si el usuario pregunta por la inmobiliaria, por la empresa o por los servicios, respondé con información breve y clara sobre la inmobiliaria y los servicios que ofrece. No hables de más, no es necesario. remarca que la inmobiliaria es MYM y que lo ayudará a encontrar lo que busca.
+
+        Una pregunta por vez, no respondas con textos largos ni te vayas de la conversación, el objetivo es concretar una venta.
+
+        No repitas lo que el usuario ya dijo; respondé directo al punto.
+
+        No inventes información; si no lo sabés, pidele disculpas y dile que podrás ayudarlo con algo más.
+
+        No agendes visitas para alquiler.
+
+        Natural y fluido: como si fuera una charla real, sin tecnicismos ni emojis.
+
+        Solo podés referir a las funciones y contexto disponible, sin explicar cómo se usan internamente.
+
+        ### REGLAS DE NEGOCIO:
+        - Primero que nada debes lograr que el usuario te confirme que está buscando propiedades, si no lo hace no puedes buscar propiedades.
+        - Si busca propiedades, analiza lo que busca y se breve y practico, no preguntes de más.
+        - Solamente despues de que haya visto propiedades puede proponer una visita antes no
+       
+
+        Precios en euros.
+
+    
+
+         ℹ️ Información adicional
+        Hoy es ${new Date().toLocaleDateString()}, hora ${new Date().toLocaleTimeString()}.
+
+        Visitas: lunes a viernes, 9:00–18:00 en bloques de 30 min.
+
+        ### propiedades encontradas al momento:
+
+        ${JSON.stringify(request_property)}
+
+        ### Conversacion hasta el momento:
+        ${formatMessages(state.messages)}
+
+        ### ACCION A TOMAR AHORA
+        - Con las propiedades encontradas, debes proponerle al usuario cuales son las intenciones:
+        - Visitar la propiedad
+        - pedir mas información
+        - recomendaciones 
+        - buscar otras alternativas
+        - Consultarle por otras acciones que quiera tomar
+
+        ### REGLAS SOBRE ESTA CONVERSACIÓN
+        - Ve preguntandole al usuario de a una cosa por vez, no le preguntes todo junto.
+        - Tu objetivo es concretar una venta, no le preguntes cosas innecesarias.
+        - Lograr que visite la propiedad es muy positivo ya que es un paso importante para concretar la venta y por sobre todo para que el usuario vea la propiedad y pueda decidir si le gusta o no.
+
+        ### POSIBLES RESPUESTAS DEL USUARIO
+        1 - Si quiere agendar una visita a alguna de las propiedades, debes preguntarle por la fecha y hora que le gustaría visitar la propiedad.
+        - Vas a verificar disponibilidad de la visita en la herramienta "getAvailabilityTool" y si está disponible, debes agendarla con la herramienta "createbookingTool".
+        - Sino le propones otro horario disponible
+
+
+        2 - Si quiere ver otras opciones, le preguntas sobre si tiene nuevas caracteristicas  o requisitos para la busqueda, como ampliar el presupuesto, cantidad de dormitrios, metros cuadrados, piscina, etc
+        - Siempre preguntar de a uno por vez pero lo mas importante es que el usuario desarrolle por su cuenta lo que busca, no le preguntes todo junto.
+         - En el caso         
+    `
+    const response = await llm.invoke(prompt)
+
+    let toolResponse = ""
+
+    if (response.tool_calls && response.tool_calls.length > 0){
+      
+      const callFound = response.tool_calls.map((call:any) => {
+        return call.name === "getAvailabilityTool" && call 
+      })
+
+       if(callFound.length > 0){
+        const response = await getAvailabilityTool.invoke(callFound[0].args as {startTime: string, endTime: string})
+        return toolResponse=response
+        // return {messages: [...state.messages, response]}
+       } 
+
+       const callFoundTwo = response.tool_calls.map((call:any) => {
+        return call.name === "createBookingTool" && call 
+      })
+
+      if(callFoundTwo.length > 0){
+        const response = await createbookingTool.invoke(callFoundTwo[0].args as {start: string, name: string, email: string})
+        return toolResponse = response
+        // return {messages: [...state.messages, response]}
+      }
+
+    }
+
+    const res = await llm.invoke(toolResponse)
+
+    return {messages: [...messages, res]}
+
+
 }
 
-function routeStart(state: typeof newState.State): "classify" | "extraction" {
+function routeStart(state: typeof newState.State): "classify" | "evaluate" {
   if (!state.request_property) {
-    return "extraction";
+    return "evaluate";
   }
 
   return "classify";
+}
+
+const routeAfterClassifying = (state: typeof newState.State) => {
+const {request_property}=state
+
+if(!request_property){
+  return "evaluate"
+}
+return END
+
 }
 
 
@@ -791,17 +1009,17 @@ const graph = new StateGraph(newState);
 
 graph
   .addNode("classify", classify)
-  .addNode("tools", callTool)
+ 
+  .addNode("callTools", callTool)
   .addNode("evaluate", evaluate)
-  
-  .addEdge("__start__", routeStart, ["classify", "evaluate"])
+  .addConditionalEdges("__start__", routeStart, ["classify", "evaluate"])
   .addConditionalEdges("classify", routeAfterClassifying, [
-    "callTools",
-    "extraction",
+    END,
+    "evaluate",
   ])
-  .addConditionalEdges("evaluate", routerAfterEvaluate, ["tools", END])
+  .addConditionalEdges("evaluate", routerAfterEvaluate, ["callTools", END])
 
-  .addEdge("tools", END);
+  .addEdge("callTools", END);
 
 const checkpointer = new MemorySaver();
 
