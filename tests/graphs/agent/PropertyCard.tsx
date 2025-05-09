@@ -7,7 +7,9 @@
 // } from "../../../src/ui/Carousel.js";
 import "./styles.css";
 
-export const PropertyCard: React.FC<Product> = (props) => (
+function PropertyCard (props:any) { 
+
+  return (
   <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 mx-2">
     <img
       src={"https://blog.wasi.co/wp-content/uploads/2019/07/claves-fotografia-inmobiliaria-exterior-casa-software-inmobiliario-wasi.jpg"}
@@ -46,7 +48,7 @@ export const PropertyCard: React.FC<Product> = (props) => (
       </a>
     </div>
   </div>
-);
+);}
 export default PropertyCard
 
 export interface Product {

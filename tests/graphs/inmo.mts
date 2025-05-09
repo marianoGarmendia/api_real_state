@@ -13,11 +13,10 @@ import {
   HumanInterrupt,
   HumanInterruptConfig,
   HumanResponse,
-  
 } from "@langchain/langgraph/prebuilt";
 // import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-// import  ComponentMap from "./agent/ui.js";
+import ComponentMap from "./agent/ui.js";
 import {
   typedUi,
   uiMessageReducer,
@@ -29,7 +28,7 @@ import {
   MessagesAnnotation,
   StateGraph,
   interrupt,
-  Command
+  Command,
 } from "@langchain/langgraph";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
 import { ChatOpenAI } from "@langchain/openai";
@@ -44,9 +43,9 @@ import { getPisos2, pdfTool } from "./pdf-loader_tool.mjs";
 import { contexts } from "./contexts.mjs";
 import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
-import {formatMessages} from "./format-messages.mjs";
+import { formatMessages } from "./format-messages.mjs";
 import { formatSchema } from "./format_schema.mjs";
-import {contextPrompt} from "./products_finder/helpers.mjs";
+import { contextPrompt } from "./products_finder/helpers.mjs";
 
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
@@ -56,6 +55,7 @@ export const empresa = {
 // process.env.LANGCHAIN_CALLBACKS_BACKGROUND = "true";
 import * as dotenv from "dotenv";
 import { update } from "lodash-es";
+import { timeStamp } from "node:console";
 // import { tool, ToolSchemaBase } from "@langchain/core/tools";
 dotenv.config();
 
@@ -71,15 +71,20 @@ dotenv.config();
 const stateAnnotation = MessagesAnnotation;
 
 interface toolSchema {
-  tool_name: string,
-  id:string
+  tool_name: string;
+  id: string;
+}
+
+interface inputInmuble {
+  prompt: string;
+  props: string[];
 }
 
 const newState = Annotation.Root({
   ...stateAnnotation.spec,
   summary: Annotation<string>,
   property: Annotation<object>,
-  request_property_finder: Annotation<toolSchema>,
+  request_property: Annotation<inputInmuble>,
   interruptResponse: Annotation<string>,
   ui: Annotation({ reducer: uiMessageReducer, default: () => [] }),
 });
@@ -105,7 +110,7 @@ export const model = new ChatOpenAI({
   streaming: false,
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
-})
+});
 
 // const toolNode = new ToolNode(tools);
 
@@ -187,8 +192,6 @@ async function callModel(
  `,
   );
 
-
-
   const response = await model.invoke([systemsMessage, ...messages]);
 
   // console.log("response: ", response);
@@ -233,14 +236,12 @@ function shouldContinue(
   state: typeof newState.State,
   config: LangGraphRunnableConfig,
 ) {
-  const { messages , request_property_finder} = state;
-
-  
+  const { messages, request_property } = state;
 
   const lastMessage = messages[messages.length - 1] as AIMessage;
 
   console.log("shouldContinue: ", lastMessage);
-  
+
   // If the LLM makes a tool call, then we route to the "tools" node
   if (lastMessage?.tool_calls?.length) {
     return "tools";
@@ -470,19 +471,18 @@ interface pisosToolArgs {
   tipo_operacion: "venta" | "alquiler";
 }
 
-let buscar = false
+let buscar = false;
 
 const toolNodo = async (
   state: typeof newState.State,
   config: LangGraphRunnableConfig,
 ) => {
-  const { messages , request_property_finder} = state;
+  const { messages, request_property } = state;
   const ui = typedUi(config);
   const lastMessage = messages[messages.length - 1] as AIMessage;
   console.log("lastMessage: ", lastMessage);
-  console.log("request_property_finder: ", request_property_finder);
-  
-  
+  console.log("request_property_finder: ", request_property);
+
   console.log("toolNodo");
   console.log("-----------------------");
   // console.log(lastMessage);
@@ -562,34 +562,32 @@ const toolNodo = async (
               "createbookingTool",
             );
           }
-        }else{
+        } else {
           toolMessage = new ToolMessage(
             "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
             tool_call_id,
-            "createbookingTool",)
+            "createbookingTool",
+          );
         }
-        
-       
-      }else{
+      } else {
         toolMessage = new ToolMessage(
           "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
-          tool_call_id, 
+          tool_call_id,
           "createbookingTool",
-        )
+        );
       }
     } else if (toolName === "evaluate_request") {
-
-      const schemaToolArgs = await formatSchema(toolArgs)
+      const schemaToolArgs = await formatSchema(toolArgs);
 
       const res = await productsFinder({
         prompt: schemaToolArgs.prompt,
         props: INMUEBLE_PROPS,
-        config:config
+        config: config,
       } as any);
-      const responseTool = res as {item :any[] , message:ToolMessage}
+      const responseTool = res as { item: any[]; message: ToolMessage };
       toolMessage = responseTool.message;
       // toolMessage = new ToolMessage("", request_property_finder.id , "evaluate_request")
-      console.log("res item: ", responseTool.item );
+      console.log("res item: ", responseTool.item);
 
       ui.push({
         name: "products-carousel",
@@ -598,7 +596,7 @@ const toolNodo = async (
           toolCallId: toolCallId,
         },
         metadata: {
-          message_id: lastMessageID,  
+          message_id: lastMessageID,
         },
       });
     }
@@ -633,85 +631,177 @@ const toolNodo = async (
 };
 
 const evaluate = async (state: typeof newState.State) => {
-  const { messages , request_property_finder} = state;
-
- 
-  if(buscar) {
-    
-    return new Command({
-      update:{
-        messages: [...messages],
-        request_property_finder: request_property_finder,
-      }
-    })
-  }
+  const { messages } = state;
 
   const schema = z.object({
-    habitaciones: z.string().nullable(),
-    precio_aproximado: z.string(),
-    zona: z.string(),
-    superficie_total: z.string().nullable(),
-    piscina: z.enum(["si", "no"]).nullable(),
-    tipo_operacion: z.enum(["venta"]).describe("Tipo de operación"),
-    query: z.string().describe("Consulta del usuario"),
-  })
+    prompt: z
+      .string()
+      .describe(
+        "Consulta del usuario sobre el producto buscado, debe contener todos los requerimientos que el usuario considere relevantes",
+      ),
+    props: z
+      .array(z.string())
+      .describe("Atributos del producto que se pueden filtrar"),
+  });
 
   const llm = new ChatOpenAI({
     model: "gpt-4o",
     streaming: false,
     apiKey: process.env.OPENAI_API_KEY,
-    temperature: 0,
-  }).bindTools([{
-    name: "evaluate_request",
-    description: "Evalua si el usuario ya tiene la información necesaria para buscar propiedades y completa los campos necesarios",
-    schema: schema
-  }]).withConfig({tags: ["nostream"]});
+    temperature: 0.3,
+  })
+    .bindTools([
+      {
+        name: "find_property",
+        description:
+          "Recopila la información necesaria para buscar la propiedad que desea comprar el usuario ",
+        schema: schema,
+      },
+    ])
+    .withConfig({ tags: ["nostream"] });
 
   const conversation = formatMessages(messages);
 
-  const prompt =`Eres un agente de ventas inmobiliarias y según el siguiente contexto de conversación debes evaluar si ya está todo listo para buscar propiedades, falta información o si el usuario no está buscando propiedades. vas a tener una herramienta para busqueda de propiedades si consideras utilizar
-  Para poder utilziar la herramienta de busqueda de propiedades, el usuario debe haber dado al menos la información para comlpetar los siguientes campos:
+  const prompt = `Eres un agente de ventas d la imobiliaria MYM, el usuario está en busqueda una propiedad en venta, su consulta puede ser variada, puede preguntar por una zona, por cantidad de dormitorios, por precio, por piscina, por m2, por una propiedad en particular o por una propiedad en general, puede llegar a ser muy amplia o muy especifica la descripcion, debes ser capaz de recopilar la información relevante para poder utilizar la herramienta para la busqueda de propiedades.
+  Para ellos debes recopialr datos como:
+  cantidad de dormitorios, cantidad de baños, precio aproximado, zona, piscina, m2 construidos, m2 terraza, si es una propiedad en venta o alquiler.
+  No necesiariamente deben estar todos, pero si los más importantes que el ususario considere relevantes.
+  Para ello preguntale cual considera relevante para su búsqueda y que lo detalle lo mejor posible, ya que con ello mejoraras la calidad de la búsqueda.
 
-  habitaciones, precio_aproximado, y zona.
+  debes guardar la información en la variable prompt y props, para ello debes utilizar el siguiente formato:
+  prompt: 'Consulta del usuario sobre el producto buscado',
+  props: 'Atributos del producto que se pueden filtrar',
 
-  Sin esos 3 campos obligatorios no puedes buscar propiedades
-
+  Además te proveo de la conversación con el usuario hasta el momento
     El contexto de la conversacion es este hisotrial de mensajes entre el usuario y tu.
     contexto: ${conversation}
    
-    `
+    `;
 
-    const response = await llm.invoke(prompt)
+  const response = await llm.invoke(prompt);
   console.log("evaluate response: ", response);
-    
-    
- 
-  
 
-    if(response.tool_calls && response.tool_calls.length > 0){
-      console.log("response.tool_calls: ", response.tool_calls[0]);
-      const {habitaciones, precio_aproximado, zona} = response.tool_calls[0].args as pisosToolArgs & {query: string}
+  if (response.tool_calls && response.tool_calls.length > 0) {
+    const toolMessage = new ToolMessage(
+      "Recopilación de datos exitosa para buscar la propiedad",
+      response.tool_calls[0].id as string,
+      "find_property",
+    );
+    // Aca se podría manipular los requerimientos de la propiedad segun los argumentos, etc
+    return {
+      messages: [...messages, toolMessage],
+      request_property: response.tool_calls[0].args as inputInmuble,
+    };
+  }
+};
 
-      if(habitaciones && precio_aproximado  && zona){
-       buscar = true
-       return {messages: [...messages, response], request_property_finder: response.tool_calls[0]}
-      }
+const routerAfterEvaluate = (state: typeof newState.State) => {
+  const { request_property } = state;
 
-     
+  if (!request_property) {
+    return END;
+  }
+
+  return "tools";
+};
+
+const callTool = async (
+  state: typeof newState.State,
+  config: LangGraphRunnableConfig,
+) => {
+  const { request_property } = state;
+  if (!request_property) {
+    throw new Error("No hay requerimientos para la búsqueda de la propiedad");
+  }
+
+  const ui = typedUi(config);
+
+  const llm = new ChatOpenAI({
+    model: "gpt-4o",
+    temperature: 0,
+    apiKey: process.env.OPENAI_API_KEY,
+  }).bindTools([productsFinder]);
+
+  const response = await llm.invoke([
+    {
+      role: "system",
+      content:
+        "Eres un agente de ventas d la imobiliaria MYM, el usuario está en busqueda una propiedad en venta, puedes extraer los requisitos necesarios de la conversacion para buscar la propiedad que desea comprar el usuario",
+    },
+    ...state.messages,
+  ]);
+
+  const lastMessageID = state.messages[state.messages.length - 1].id as string;
+
+  if (response.tool_calls && response.tool_calls.length > 0) {
+    const toolCallId = response.tool_calls[0].id as string;
+    const responseFinder = await productsFinder.invoke(
+      response.tool_calls[0].args as inputInmuble,
+    );
+    const { item, message } = responseFinder as {
+      item: any[];
+      message: ToolMessage;
+    };
+
+
+    ui.push(
+      {
+        name: "products-carousel",
+        props: {
+          items: [...item],
+          toolCallId: toolCallId,
+        },
+        metadata: {
+          message_id: lastMessageID,
+        },
+      },
+      { message: response },
+    );
+
+    return {
+      ui: ui.items,
+      messages: [
+        ...state.messages,
+        message,
+      ],
+      timeStamp: Date.now(),
+      
     }
 
+  }
+
+
+};
+
+const classify = async (state: typeof newState.State) => {
+  const {request_property} = state
+  
 }
+
+function routeStart(state: typeof newState.State): "classify" | "extraction" {
+  if (!state.request_property) {
+    return "extraction";
+  }
+
+  return "classify";
+}
+
 
 const graph = new StateGraph(newState);
 
 graph
-  .addNode("agent", callModel)
-  .addNode("tools", toolNodo)
+  .addNode("classify", classify)
+  .addNode("tools", callTool)
   .addNode("evaluate", evaluate)
-  .addEdge("__start__", "agent")
-  .addEdge("agent", "evaluate")
-  .addConditionalEdges("evaluate" , shouldContinue )
-  .addEdge("tools", "agent");
+  
+  .addEdge("__start__", routeStart, ["classify", "evaluate"])
+  .addConditionalEdges("classify", routeAfterClassifying, [
+    "callTools",
+    "extraction",
+  ])
+  .addConditionalEdges("evaluate", routerAfterEvaluate, ["tools", END])
+
+  .addEdge("tools", END);
 
 const checkpointer = new MemorySaver();
 

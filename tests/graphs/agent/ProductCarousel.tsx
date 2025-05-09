@@ -2,6 +2,7 @@ import  { useRef , useEffect , useState} from 'react';
 import {Product} from './PropertyCard.js'
 import PropertyCard from './PropertyCard.js';
 import "./styles.css";
+import { C } from 'vitest/dist/chunks/environment.d.Dmw5ulng.js';
 
 // import {
 //     Carousel,
@@ -33,7 +34,7 @@ import "./styles.css";
     items: Product[];
   }
   
-  const PropertyCarousel: React.FC<CarouselProps> = ({ items }) => {
+  function PropertyCarousel   ({ items }:CarouselProps) {
     const [current, setCurrent] = useState(0);
     const wrapperRef = useRef<HTMLDivElement>(null);
   
