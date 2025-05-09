@@ -34,6 +34,9 @@ export const createbookingTool = tool(
     const fechaAjustada = new Date(
       fechaOriginal.getTime() + 3 * 60 * 60 * 1000
     ).toISOString();
+
+    console.log("fecha original: " + fechaOriginal.getTime());
+    
     
     // const fechaOriginalIso = fechaOriginal.toISOString();
     console.log("fecha original: " + fechaOriginal);

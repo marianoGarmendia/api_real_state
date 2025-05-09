@@ -44,7 +44,7 @@ const findProducts = async (prompt: string, props: string[]) => {
 const BASE_URL = "https://propiedades.winwintechbank.com/#/producto";
 const buildUrl = (id: string | number) => `${BASE_URL}/${id}`;
 
-export const productsFinder = tool(
+export const  productsFinder = tool(
   async ({ prompt, props }, config) => {
     const state = await workflow.getState({
       configurable: { thread_id: config.configurable.thread_id },
@@ -64,7 +64,7 @@ export const productsFinder = tool(
       
       
       
-      if (!products) {
+      if (!products || products.length === 0) {
         return  {item: [] , message: new ToolMessage(`No se encontraron propiedades con esas caracteristicas`, toolCallId, "products_finder")};
       } else {
        
