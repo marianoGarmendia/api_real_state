@@ -94,19 +94,9 @@ export const model = new ChatOpenAI({
 
 // const toolNode = new ToolNode(tools);
 
-const opts = {
-  timeZone: "Europe/Madrid",
-  year:   "numeric",
-  month:  "2-digit",
-  day:    "2-digit",
-  hour:   "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,           // formato 24 h
-};
 
-const formatter = new Intl.DateTimeFormat("en-US", opts as Intl.DateTimeFormatOptions);
-const fechaMadrid = formatter.format(new Date());
+
+
 
 
 
