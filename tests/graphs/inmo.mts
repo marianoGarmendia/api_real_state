@@ -561,7 +561,7 @@ const toolNodo = async (
         }
       }
     } else if (toolName === "universal_info_2025") {
-      const res = await pdfTool.invoke(toolArgs);
+      // const res = await pdfTool.invoke(toolArgs);
       toolMessage = new ToolMessage("res", tool_call_id, "universal_info_2025");
     } else if (toolName === "getAvailabilityTool") {
       const res = await getAvailabilityTool.invoke(toolArgs);
