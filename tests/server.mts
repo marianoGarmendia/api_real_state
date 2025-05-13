@@ -36,6 +36,8 @@ fs.ensureDirSync("audios"); // crea la carpeta si no existe
 // const upload = multer({ storage });
 
 import { workflow } from "./graphs/inmo.mjs";
+import { AIMessage, ToolMessage } from "@langchain/core/messages";
+import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
 // import { text } from "stream/consumers";
 // import { HumanMessage } from "@langchain/core/messages";
 
@@ -153,6 +155,7 @@ app.post("/agent", async (req, res) => {
 
 const threadLocks = new Map<string, boolean>();
 
+
 app.post("/v1/chat/completions", async (req, res) => {
   const { messages, stream } = req.body;
   const last_message = messages.at(-1);
@@ -223,7 +226,16 @@ app.post("/v1/chat/completions", async (req, res) => {
       { messages: last_message },
       { configurable: { thread_id } }
     );
-    // console.log("agentResp: ", agentResp);
+    if(agentResp.messages.at(-1) instanceof AIMessage ){
+        console.log("AIMessage: ");
+        
+    }else if(agentResp.messages.at(-1) instanceof ToolMessage){
+        console.log("ToolMessage: ");
+    }else{
+        console.log("Human message");
+    }
+    // console.log("agentResp length: ", agentResp.messages.at(-1)?.content);
+    
     
     // const afterState = await workflow.getState({ configurable: { thread_id } });
     // const afterHistory = afterState.values.messages || [];
