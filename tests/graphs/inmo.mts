@@ -88,7 +88,7 @@ const newState = Annotation.Root({
 
 export const model = new ChatOpenAI({
   model: "gpt-4o",
-  streaming: false,
+  streaming: false, 
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
 }).bindTools(tools);
@@ -261,7 +261,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
-  console.log("repsonse ", response);
+  console.log("messages ", response);
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
 

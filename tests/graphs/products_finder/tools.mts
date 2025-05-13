@@ -33,6 +33,7 @@ const findProducts = async (prompt: string, props: string[]) => {
   const embeddedPrompt = await embeddingModel.embedQuery(prompt);
   const result = await index.query({
     vector: embeddedPrompt,
+    
     topK: 5,
     includeMetadata: true,
     filter,
