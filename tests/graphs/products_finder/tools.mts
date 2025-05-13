@@ -50,6 +50,10 @@ export const  productsFinder = tool(
     const state = await workflow.getState({
       configurable: { thread_id: config.configurable.thread_id },
     });
+
+    console.log("last message PRODUCT FINDER", state.values.messages.at(-1));
+    // const message = state.values.messages.at(-1);
+    
     // const message_id = state.values.messages.at(-1).id
             const toolCallId = state.values.messages.at(-1).tool_calls.find((call:any) => call.name === "products_finder")?.id;
 

@@ -12,11 +12,13 @@ import {
   HumanInterruptConfig,
   HumanResponse,
 } from "@langchain/langgraph/prebuilt";
+
+import { ensureToolCallsHaveResponses } from "./ensure-tool-response.mjs";
 // import { tool } from "@langchain/core/tools";
 // import { z } from "zod";
 // import  ComponentMap from "./agent/ui.js";
 import {
-  typedUi,
+
   uiMessageReducer,
 } from "@langchain/langgraph-sdk/react-ui/server";
 import {
@@ -79,7 +81,7 @@ export const model = new ChatOpenAI({
   streaming: false, 
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
-}).bindTools(tools);
+}).bindTools(tools).withConfig({tags: ["nostream"]});
 
 // const toolNode = new ToolNode(tools);
 
@@ -275,11 +277,18 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
-  console.log("messages ", response);
+ 
+  const messagesWithToolResponses = ensureToolCallsHaveResponses(messages);
+
+  console.log("messagesWithToolResponses ante last: ", messagesWithToolResponses.at(-2));
+  console.log("messagesWithToolResponses last message: ", messagesWithToolResponses.at(-1));
+  console.log("response: ", response);
+  
+
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
 
-  return { messages: [...messages, response] };
+  return { messages: [...messagesWithToolResponses, response] };
 
   // console.log(messages, response);
 
@@ -311,6 +320,8 @@ function shouldContinue(
   config: LangGraphRunnableConfig,
 ) {
   const { messages } = state;
+  // console.log(messages);
+  
 
   const lastMessage = messages[messages.length - 1] as AIMessage;
   // If the LLM makes a tool call, then we route to the "tools" node
@@ -564,16 +575,16 @@ const toolNodo = async (
   config: LangGraphRunnableConfig,
 ) => {
   const { messages } = state;
-  const ui = typedUi(config);
+  // const ui = typedUi(config);
   const lastMessage = messages[messages.length - 1] as AIMessage;
   console.log("toolNodo");
   console.log("-----------------------");
   // console.log(lastMessage);
   // console.log(lastMessage?.tool_calls);
 
-  let toolMessage: BaseMessageLike;
+  let toolMessage: ToolMessage;
   if (lastMessage?.tool_calls?.length) {
-    const lastMessageID = lastMessage.id;
+    // const lastMessageID = lastMessage.id;
     const toolName = lastMessage.tool_calls[0].name;
     const toolArgs = lastMessage.tool_calls[0].args as pisosToolArgs & {
       query: string;
@@ -667,16 +678,16 @@ const toolNodo = async (
 
       
 
-      ui.push({
-        name: "products-carousel",
-        props: {// @ts-ignore
-          items: [...res.item],
-          toolCallId: tool_call_id,
-        },
-        metadata: {
-          message_id: lastMessageID,
-        },
-      });
+      // ui.push({
+      //   name: "products-carousel",
+      //   props: {// @ts-ignore
+      //     items: [...res.item],
+      //     toolCallId: tool_call_id,
+      //   },
+      //   metadata: {
+      //     message_id: lastMessageID,
+      //   },
+      // });
     }
   } else {
     const toolMessages = lastMessage.tool_calls?.map((call) => {
@@ -705,7 +716,7 @@ const toolNodo = async (
   // });
   // console.log("toolMessage: ", toolMessage);
 //@ts-ignore
-  return { ui: ui.items, messages: [...messages, toolMessage]  , timestamp: Date.now() };
+  return {  messages: [...messages, toolMessage]  , timestamp: Date.now() };
 };
 
 // const delete_messages = async (state: typeof newState.State) => {
@@ -789,9 +800,9 @@ graph
   .addConditionalEdges("agent", shouldContinue)
   .addEdge("tools", "agent");
 
-const checkpointer = new MemorySaver();
+// const checkpointer = new MemorySaver();
 
-export const workflow = graph.compile({ checkpointer });
+export const workflow = graph.compile();
 // let config = { configurable: { thread_id: "123" } };
 
 // const response = await workflow.invoke({messages:"dame las noticias ams relevantes de este 2025"}, config)
