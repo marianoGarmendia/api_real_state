@@ -18,6 +18,7 @@ export const buildFilter = <T extends Record<string, any>>(rawQuery: T) => {
       );
       return [key, value];
     });
-
-  return fromPairs(queryPairs); 
+    const filter = fromPairs(queryPairs);
+    filter["tipo_operacion"] = "Venta";
+  return filter
 };
