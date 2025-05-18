@@ -90,15 +90,20 @@ const newState = Annotation.Root({
 
 export const model = new ChatOpenAI({
   model: "gpt-4o",
-  streaming: false, 
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
-}).bindTools(tools).withConfig({tags: ["nostream"]});
+}).bindTools(tools).withConfig({tags: ["nostream"]})
 
 // const toolNode = new ToolNode(tools);
 
 
 
+// const llm = new ChatOpenAI({
+//   model: "gpt-4o",
+//   streaming: false,
+//   apiKey: process.env.OPENAI_API_KEY,
+//   temperature: 0,
+// })
 
 
 
@@ -117,7 +122,7 @@ async function callModel(
   const conversation = formatMessages(messages);
   const systemsMessage = new SystemMessage(
     `
-  Sos Carla, el Agente IA de inmoboliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
+  Sos Carla, Agente de inmoboliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
     
 Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. Las respuestas deben ser **breves, naturales y fáciles de seguir en una conversación oral**. No hables demasiado seguido sin dejar espacio para que el usuario responda.
 
@@ -126,8 +131,10 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
           - Hora y dia completo ${new Date().toUTCString()}
 
 ### 🧠 Comportamiento ideal:
+- Tus respuestas deben ser breves y naturales, como si fuera una charla real, sin tecnicismos ni emojis.
+- Al ser un agente de voz, tus respuestas deben ser cortas y fáciles de entender.
 - Cuando encuentres propiedades, describe el titulo la zona y el precio y dile:
-- Te he compartido arriba de este mensaje una lista de propeidades con las caracteristicas y el link para verlas.
+
 
 - Si el usuario elige una, describí **solo 2 o 3 características importantes**, como:  
   “Es un departamento de 3 habitaciones, con 2 baños y una terraza amplia.”  
@@ -155,7 +162,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
       - Busca una propiedad cerca de la zona de busqueda y si hay colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad.
 
       ---
-      Sos Carla, el Agente IA de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
+      Sos Carla, Agente de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
 
         ### INFORMACION CONTEXTUAL:
         - La inmobiliaria se llama MYM y está ubicada en españa.
@@ -174,7 +181,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 
         Saludo inicial:
 
-        “Hola, soy Carla, Agente IA de la inmobiliaria MYM. quiero ayduarte a resolver todas tus consultas, ¿cual es tu nombre?”
+        “Hola, soy Carla, Agente de la inmobiliaria MYM. quiero ayduarte a resolver todas tus consultas, ¿cual es tu nombre?”
         ( Cuanbdo el usuario responde, lo saludas por su nombre y le preguntas en que podes ayudarlo/a)
 
         🧱 Reglas de conversación
@@ -246,6 +253,27 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
           El contexto de la conversacion es este hisotrial de mensajes entre el usuario y tu.
           contexto: ${conversation}
 
+          ### REGLAS IMPORTANTES PARA EL AGENTE DE VOZ:
+
+          Tu respuesta va a ser hablada directamente al usuario por ende no debes usar emojis ni tecnicismos, solo lo que el usuario necesita saber.
+  Además debes modificar ciertas palabras o simbolos para que el agente de voz lo entienda.
+  Por ejemplo: si en el mensaje hay un signo de $ o de €, debes cambiarlo por la palabra "euros" o "dolares" respectivamente.
+  Si hay un signo de % debes cambiarlo por la palabra "porciento" o "porcentaje" respectivamente.
+  Si hay un signo de + o - debes cambiarlo por la palabra "mas" o "menos" respectivamente.
+  Si hay un signo de / debes cambiarlo por la palabra "por" respectivamente.
+  - Si dice USD debes cambiarlo por "dolares"
+  - Si dice EUR debes cambiarlo por "euros"
+  en cuando a los numeros:
+  - si hay un numero como 100.000 debes cambiarlo por "cien mil"
+  - si hay un numero como 1.000.000 debes cambiarlo por "un millon"
+  - si est la palabra m2 debes cambiarlo por "metros cuadrados"
+  - si hay un numero como 1.5 debes cambiarlo por "uno punto cinco"
+  - Si dice 2 hab. debes cambiarlo por "dos habitaciones"
+  - Si dice 2 baños debes cambiarlo por "dos baños"
+  - sis dice MYM debes cambiarlo por "inmobiliaria EME Y EME"
+  - las siglas deben cambiarse por la palabra completa, si dice "CRM" debes cambiarlo por "sistema de gestión de clientes"
+  y asi con cada simbolo o palabra que no entienda el agente de voz.
+
 
           INFORMACIÓN CONTEXTUAL de dia y hora:
           Hoy es ${new Date()} y la hora es ${new Date().toLocaleTimeString()} 
@@ -253,23 +281,24 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 
     `,
   );
-
+  
   const response = await model.invoke([systemsMessage, ...messages]);
-
+  
   // console.log("response: ", response);
-
+  
+  const messagesWithToolResponses = ensureToolCallsHaveResponses(messages);
   // const cadenaJSON = JSON.stringify(messages);
   // Tokeniza la cadena y cuenta los tokens
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
  
-  const messagesWithToolResponses = ensureToolCallsHaveResponses(messages);
 
-  console.log("messagesWithToolResponses ante last: ", messagesWithToolResponses.at(-2));
-  console.log("messagesWithToolResponses last message: ", messagesWithToolResponses.at(-1));
-  console.log("response: ", response);
+  // console.log("messagesWithToolResponses ante last: ", messagesWithToolResponses.at(-2));
+  // console.log("messagesWithToolResponses last message: ", messagesWithToolResponses.at(-1));
+  // console.log("response: ", response);
   
+  // const res = await llm.invoke([systemPromt, response]);
 
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
@@ -301,14 +330,38 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 //     }
 //   },
 
+
+const systemPromt = new SystemMessage(
+  `Eres un evaluador de respuestas  y debes resumir y estructurar ésta respuesta para que sea procesada por un agente de voz, es decir, que el texto que respondas de esta evaluacion del mensaje debe ser breve, claro y conciso, como si fuera una charla real, sin tecnicismos ni emojis.
+  Tu respuesta va a ser hablada directamente al usuario por ende no debes usar emojis ni tecnicismos, solo lo que el usuario necesita saber.
+  Además debes modificar ciertas palabras o simbolos para que el agente de voz lo entienda.
+  Por ejemplo: si en el mensaje hay un signo de $ o de €, debes cambiarlo por la palabra "euros" o "dolares" respectivamente.
+  Si hay un signo de % debes cambiarlo por la palabra "porciento" o "porcentaje" respectivamente.
+  Si hay un signo de + o - debes cambiarlo por la palabra "mas" o "menos" respectivamente.
+  Si hay un signo de / debes cambiarlo por la palabra "por" respectivamente.
+  - Si dice USD debes cambiarlo por "dolares"
+  - Si dice EUR debes cambiarlo por "euros"
+  en cuando a los numeros:
+  - si hay un numero como 100.000 debes cambiarlo por "cien mil"
+  - si hay un numero como 1.000.000 debes cambiarlo por "un millon"
+  - si est la palabra m2 debes cambiarlo por "metros cuadrados"
+  - si hay un numero como 1.5 debes cambiarlo por "uno punto cinco"
+  - Si dice 2 hab. debes cambiarlo por "dos habitaciones"
+  - Si dice 2 baños debes cambiarlo por "dos baños"
+  - sis dice MYM debes cambiarlo por "inmobiliaria EME Y EME"
+  - las siglas deben cambiarse por la palabra completa, por ejemplo: si dice "AI" debes cambiarlo por "inteligencia artificial", si dice "CRM" debes cambiarlo por "sistema de gestión de clientes"
+  y asi con cada simbolo o palabra que no entienda el agente de voz.
+  
+  `
+)
+
 function shouldContinue(
   state: typeof newState.State,
   config: LangGraphRunnableConfig,
 ) {
   const { messages } = state;
   // console.log(messages);
-  
-
+ 
   const lastMessage = messages[messages.length - 1] as AIMessage;
   // If the LLM makes a tool call, then we route to the "tools" node
   if (lastMessage?.tool_calls?.length) {
@@ -656,6 +709,10 @@ const toolNodo = async (
         );
       }
     } else if (toolName === "products_finder") {
+      console.log("products_finder");
+      console.log(lastMessage);
+      
+      
       const res = await productsFinder.invoke({
         ...toolArgs,
         props: INMUEBLE_PROPS,
@@ -786,9 +843,9 @@ graph
   .addConditionalEdges("agent", shouldContinue)
   .addEdge("tools", "agent");
 
-// const checkpointer = new MemorySaver();
+const checkpointer = new MemorySaver();
 
-export const workflow = graph.compile();
+export const workflow = graph.compile({checkpointer});
 // let config = { configurable: { thread_id: "123" } };
 
 // const response = await workflow.invoke({messages:"dame las noticias ams relevantes de este 2025"}, config)

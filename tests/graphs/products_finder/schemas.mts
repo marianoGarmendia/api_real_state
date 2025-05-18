@@ -25,7 +25,7 @@ export const ConditionSchema = z.object({
  * @param props: string[] - Propiedades que se pueden filtrar.
  * @returns
  */
-export const buildQuerySchema = (props: string[]) =>
+export const  buildQuerySchema = (props: string[]) =>
   z
     .object(
       fromPairs(
@@ -42,6 +42,7 @@ export const buildQuerySchema = (props: string[]) =>
 export const buildQueryFilterModel = (querySchema: ZodSchema) => 
     chatModel.withStructuredOutput(querySchema, {
     strict: false,
+    
   }).withConfig({ tags: ["nostream"] });
 
   

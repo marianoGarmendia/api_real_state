@@ -3,7 +3,6 @@ import express from "express";
 import cors from "cors";
 import fs from "fs-extra";
 
-
 import path, { dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -154,14 +153,12 @@ app.post("/agent", async (req, res) => {
 // })
 
 const threadLocks = new Map<string, boolean>();
-
-
 app.post("/v1/chat/completions", async (req, res) => {
   const { messages, stream } = req.body;
-  const last_message = messages.at(-1);
- 
-
+  console.log("stream: ", stream);
   
+
+  const last_message = messages.at(-1);
 
   if (last_message.role !== "user") {
     res.write(
@@ -186,7 +183,7 @@ app.post("/v1/chat/completions", async (req, res) => {
       console.log("[SSE] Cliente/proxy cerró la conexión");
       console.log("[SSE] Close:", e);
       threadLocks.set(thread_id, false);
-      
+
     });
     res.on("error", (err) => {
       console.error("[SSE] Error en el stream:", err);
@@ -194,8 +191,7 @@ app.post("/v1/chat/completions", async (req, res) => {
 
   const heartbeat = setInterval(() =>     res.write(`: ping\n\n`), 2000);
 
-
-  const thread_id = "149";
+  const thread_id = "146";
   if (threadLocks.get(thread_id)) {
     clearInterval(heartbeat);
     // Informamos por SSE y luego cerramos
@@ -206,43 +202,40 @@ app.post("/v1/chat/completions", async (req, res) => {
     res.end();
     return;
   }
- 
 
   try {
-    // inyectar ToolMessages faltantes
-  
-     
-    // const state = await workflow.getState({ configurable: { thread_id } });
-    // const history = state.values.messages || [];
-    // console.log("last message of BEFORE invoke: ", history.at(-1)?.content);
-
-    // const checked = ensureToolCallsHaveResponses(history);
-    // const payload = [...checked, human];
-
-    // obtener respuesta
-    // console.log("Human message: ", last_message);
     
+    
+   
     const agentResp = await workflow.invoke(
       { messages: last_message },
       { configurable: { thread_id } }
     );
+    const state = await workflow.getState({
+      configurable: { thread_id },
+    });
+    console.log("state: ", state.values.messages.at(-1));
+    console.log("state: ", state.values.messages.at(-2));
+    
     if(agentResp.messages.at(-1) instanceof AIMessage ){
         console.log("AIMessage: ");
-        
+
     }else if(agentResp.messages.at(-1) instanceof ToolMessage){
         console.log("ToolMessage: ");
     }else{
         console.log("Human message");
     }
-    // console.log("agentResp length: ", agentResp.messages.at(-1)?.content);
-    
-    
-    // const afterState = await workflow.getState({ configurable: { thread_id } });
-    // const afterHistory = afterState.values.messages || [];
-    // console.log("last message of AFTER invoke: ", afterHistory.at(-1)?.content);
 
     const reply =
-      agentResp.messages.at(-1)?.content || "No hay respuesta del agente";
+      agentResp.messages.at(-1)?.content;
+    console.log("reply: ", reply);
+    
+      if(reply === ""){
+
+        res.write("data: [DONE]\n\n");
+   
+        return;
+      }
 
     // construir chunk
     const id = Date.now().toString();
@@ -260,14 +253,14 @@ app.post("/v1/chat/completions", async (req, res) => {
         },
       ],
     };
-    
+
     console.log("send a elevenlabs");
     // console.dir(chunk, { depth: null, colors: true });
-    
+
     res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     res.write("data: [DONE]\n\n");
     // res.end()
-    
+
   } catch (err:any) {
     res.write(
       `event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`
@@ -276,10 +269,151 @@ app.post("/v1/chat/completions", async (req, res) => {
     console.log("Error en /v1/chat/completions:", err);
   } finally {
     clearInterval(heartbeat);
-   
+
     res.end();
   }
 });
+// let forward = true;
+// app.post("/v1/chat/completions", async (req, res) => {
+//   const { messages, stream } = req.body;
+//   console.log("stream: ", stream);
+
+//   const last_message = messages.at(-1);
+
+//   if (last_message.role !== "user") {
+//     res.write(
+//       `event: error\ndata: ${JSON.stringify({
+//         message: "El último mensaje debe ser del usuario",
+//       })}\n\n`,
+//     );
+//     res.write("data: [DONE]\n\n");
+//     return;
+//   }
+
+//   if (!stream) {
+//     res.status(400).json({ error: "Solo soporta stream=true" });
+//     return;
+//   }
+//   res.setHeader("Content-Type", "text/event-stream");
+//   res.setHeader("Cache-Control", "no-cache");
+//   res.setHeader("Connection", "keep-alive");
+
+//   // En tu handler de /chat/completions
+//   req.on("close", (e: any) => {
+//     console.log("[SSE] Cliente/proxy cerró la conexión");
+//     console.log("[SSE] Close:", e);
+//     threadLocks.set(thread_id, false);
+//   });
+//   res.on("error", (err) => {
+//     console.error("[SSE] Error en el stream:", err);
+//   });
+
+//   const heartbeat = setInterval(() => res.write(`: ping\n\n`), 2000);
+
+//   const thread_id = "149";
+//   if (threadLocks.get(thread_id)) {
+//     clearInterval(heartbeat);
+//     // Informamos por SSE y luego cerramos
+//     res.write(
+//       `event: error\ndata: ${JSON.stringify({
+//         message: "Espera un momento, estoy procesando información",
+//       })}\n\n`,
+//     );
+//     res.write("data: [DONE]\n\n");
+//     res.end();
+//     return;
+//   }
+// console.log("last_message: ", last_message);
+
+
+//   try {
+//     const stream = await workflow.stream(
+//       { messages: last_message },
+//       { configurable: { thread_id }, streamMode: "messages" },
+   
+//     );
+
+//     console.log("stream: ", stream);
+    
+
+//     for await (const step of stream) {
+//       // Identifica los mensajes generados por el agente
+//       // console.log("step: ", step[0]);
+      
+//       // if (step.data && step.data.chunk ) {
+//       //  console.log("step data chunk: ", step.data.chunk);
+//       //  console.log("step data tool_calls : ", step.data.chunk.tool_calls);
+       
+       
+
+//         console.log("event: ", step.event);
+//         // console.log("data: ", step.data);
+//         // if(step.data.chunk.tools !== undefined){
+
+//         //   console.log("tools: ", step.data.chunk.tools.messages);
+//         // }
+        
+        
+        
+//           // const partial = step.data.chunk.content;
+//           const partial = step[0].content;
+//           console.log("partial: ", partial);
+//           if(partial === ""){
+//             res.write("data: [DONE]\n\n");
+//             res.end()
+//             return;
+//           }
+
+       
+        
+//             const chunk = {
+//               id: Date.now().toString(),
+//               object: "chat.completion.chunk",
+//               created: Math.floor(Date.now() / 1000),
+//               model: "gpt-4-o",
+//               choices: [
+//                 {
+//                   index: 0,
+//                   delta: {role: "assistant" ,  content: partial },
+//                   finish_reason: null,
+//                 },
+//               ],
+//             };
+  
+//             res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+
+          
+          
+          
+          
+//           // if (partial === "") {
+//           //   res.write("data: [DONE]\n\n");
+//           //   return;
+//           // }
+
+          
+        
+//       // }
+//       // Puedes emitir ToolMessages o manejar otras fases aquí también si es útil para feedback temprano
+//     }
+//     console.log("finde de stream DONE");
+    
+//     res.write("data: [DONE]\n\n");
+//     res.end();
+
+//     // res.end()
+//   } catch (err: any) {
+//     res.write(
+//       `event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`,
+//     );
+//     res.write("data: [DONE]\n\n");
+//     console.log("Error en /v1/chat/completions:", err);
+//   } finally {
+//     clearInterval(heartbeat);
+
+//     res.end();
+//   }
+// });
 
 //   const streamingDelay = 1000; // ms entre chunks
 
