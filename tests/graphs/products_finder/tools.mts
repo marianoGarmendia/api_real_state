@@ -25,7 +25,7 @@ const index = pinecone.Index(INDEX_NAME);
 
 const findProducts = async (prompt: string, props: string[]) => {
   const querySchema = buildQuerySchema(props);
-  const queryFilterModel = buildQueryFilterModel(querySchema);
+  const queryFilterModel = buildQueryFilterModel(querySchema)
   const rawQueryFilter = await queryFilterModel.invoke(prompt);
  
 
@@ -51,7 +51,7 @@ export const  productsFinder = tool(
       configurable: { thread_id: config.configurable.thread_id },
     });
 
-    console.log("last message PRODUCT FINDER", state.values.messages.at(-1));
+    // console.log("last message PRODUCT FINDER", state.values.messages.at(-1));
     // const message = state.values.messages.at(-1);
     
     // const message_id = state.values.messages.at(-1).id
@@ -68,6 +68,7 @@ export const  productsFinder = tool(
         url: buildUrl(product.id),
       }));
       
+      console.log("products", products);
       
       
       if (!products || products.length === 0) {
@@ -83,6 +84,8 @@ export const  productsFinder = tool(
 
       // // Emit UI elements associated with the AI message
     } catch (error) {
+      console.log("Error en el tool de products", error);
+      
       return {item: [] , message: new ToolMessage(`Hubo algún error al buscar la propeidad`, toolCallId, "products_finder")}
       ;
     }

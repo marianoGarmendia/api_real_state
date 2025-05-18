@@ -13,8 +13,6 @@ export const embeddingModel = new OpenAIEmbeddings({
 });
 
 export const chatModel = new ChatOpenAI({
-  model: "gpt-4o",
- 
   apiKey: OPENAI_API_KEY,
   temperature: 0,
-});
+})
