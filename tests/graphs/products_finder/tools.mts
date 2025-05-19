@@ -25,6 +25,11 @@ const index = pinecone.Index(INDEX_NAME);
 
 const findProducts = async (prompt: string, props: string[]) => {
   const querySchema = buildQuerySchema(props);
+//  console.log(props);
+ console.log(querySchema);
+ 
+ 
+    
   const queryFilterModel = buildQueryFilterModel(querySchema)
   const rawQueryFilter = await queryFilterModel.invoke(prompt);
  

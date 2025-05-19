@@ -250,7 +250,7 @@ export const getPisos2 = tool(
     zona,
     piscina,
     superficie_total,
-    tipo_operacion,
+   
   }) => {
 
   
@@ -298,7 +298,7 @@ export const getPisos2 = tool(
         .filter((p:any) => {
           const estado_ok = p.estado?.toLowerCase() !== "no disponible";
           const operacion_ok =
-            p.tipo_operacion?.toLowerCase() === tipo_operacion.toLowerCase();
+            p.tipo_operacion?.toLowerCase() === "venta";
           return estado_ok && operacion_ok;
         });
 
@@ -415,9 +415,7 @@ export const getPisos2 = tool(
         .nullable()
         .describe("Indica si desea piscina: 'si' o 'no'"),
 
-      tipo_operacion: z
-        .enum(["venta", "alquiler"])
-        .describe("Indica si busca una propiedad en 'venta' o en 'alquiler'"),
+      
     }),
   }
 );

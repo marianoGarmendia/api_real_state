@@ -47,6 +47,7 @@ import {obtener_info_usuario} from './agent/tools.mjs';
 import { contextPrompt } from "./agent/context.mjs";
 
 
+
 export const empresa = {
   eventTypeId: contexts.clinica.eventTypeId,
   context: contexts.clinica.context,
@@ -78,6 +79,7 @@ const newState = Annotation.Root({
 
 export const model = new ChatOpenAI({
   model: "gpt-4o",
+  streaming: false,
   apiKey: process.env.OPENAI_API_KEY,
   temperature: 0,
 }).bindTools(tools).withConfig({tags: ["nostream"]})
@@ -226,10 +228,41 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
         - Solamente despues de que haya visto propiedades puede proponer una visita antes no
 
         ### HERRRAMIENTAS DISPONIBLES:
-        - "products_finder" para buscar propiedades en venta. el schema que recibe de entrada es:
-         - "prompt" para la consulta del usuario sobre el producto buscado.
-         - "props" para los atributos del producto que se pueden filtrar, como "banios", "dormitorios", "piscina", "m2constr", "m2terraza", "nascensor", "num_terrazas", "precio". *Siempre ES PARA VENTA* NUNCA PARA ALQUILER.
-         IMPORTANTE: Debes identificar al menos 3 caracteristicas en la conversacion o consulta para llamar a esta herramienta, si no lo haces no la llames. las caracteristicas pueden ser: dormitorios,  precio, m2 construidos. o sino preguntale que es lo más relevante para él y que lo detalle lo mejor posible, ya que con ello mejoraras la calidad de la búsqueda.
+        - "Obtener_pisos_en_venta_dos" para buscar propiedades en venta. el schema que recibe de entrada es:
+         schema: z.object({
+               habitaciones: z
+                 .string()
+                 .regex(/^\d+$/, "Debe ser un número entero en formato texto")
+                 .nullable()
+                 .describe("Número exacto de habitaciones que desea la persona"),
+         
+               precio_aproximado: z
+                 .string()
+                 .regex(
+                   /^\d+$/,
+                   "Debe ser un número aproximado sin símbolos ni decimales"
+                 )
+                 .describe("Precio aproximado de la propiedad en euros (ej: '550000')"),
+         
+               zona: z
+                 .string()
+                 .min(2, "La zona debe tener al menos 2 caracteres")
+                 .describe("Zona o localidad donde desea buscar la propiedad"),
+         
+               superficie_total: z
+                 .string()
+                 .regex(/^\d+$/, "Debe ser un número aproximado en m2")
+                 .nullable()
+                 .describe("Superficie total del terreno de la propiedad en m²"),
+         
+               piscina: z
+                 .enum(["si", "no"])
+                 .nullable()
+                 .describe("Indica si desea piscina: 'si' o 'no'"),
+         
+              
+             }),
+         IMPORTANTE: Debes identificar al menos 3 caracteristicas en la conversacion o consulta para llamar a esta herramienta, si no lo haces no la llames. las caracteristicas pueden ser: dormitorios,  precio, superficie_total . o sino preguntale que es lo más relevante para él y que lo detalle lo mejor posible, ya que con ello mejoraras la calidad de la búsqueda.
          
          
 
@@ -259,10 +292,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
             No necesiariamente deben estar todos, pero si los más importantes que el ususario considere relevantes.
             Para ello preguntale cual considera relevante para su búsqueda y que lo detalle lo mejor posible, ya que con ello mejoraras la calidad de la búsqueda.
 
-        debes guardar la información en la variable prompt y props, para ello debes utilizar el siguiente formato:
-        prompt: 'Consulta del usuario sobre el producto buscado',
-        props: 'Atributos del producto que se pueden filtrar',
-
+       
         Además te proveo de la conversación con el usuario hasta el momento
           El contexto de la conversacion es este hisotrial de mensajes entre el usuario y tu.
           contexto: ${conversation}
@@ -298,7 +328,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   
   const response = await model.invoke([systemsMessage, ...messages]);
   
-  // console.log("response: ", response);
+  console.log("response: ", response);
   
   const messagesWithToolResponses = ensureToolCallsHaveResponses(messages);
   // const cadenaJSON = JSON.stringify(messages);
@@ -636,7 +666,7 @@ const toolNodo = async (
   // console.log(lastMessage?.tool_calls);
 
   let toolMessage: ToolMessage;
-  if (lastMessage?.tool_calls?.length) {
+  if (lastMessage?.tool_calls?.length && lastMessage.tool_calls[0]) {
     // const lastMessageID = lastMessage.id;
     const toolName = lastMessage.tool_calls[0].name;
     const toolArgs = lastMessage.tool_calls[0].args as pisosToolArgs & {
@@ -649,29 +679,44 @@ const toolNodo = async (
     let tool_call_id = lastMessage.tool_calls[0].id as string;
 
     if (toolName === "Obtener_pisos_en_venta_dos") {
-      const responseInterrupt = humanNode(lastMessage);
-      if (
-        responseInterrupt.humanResponse &&
-        typeof responseInterrupt.humanResponse !== "string" &&
-        responseInterrupt.humanResponse.args
-      ) {
-        const toolArgsInterrupt = responseInterrupt.humanResponse
-          .args as pisosToolArgs;
-        const response = await getPisos2.invoke(toolArgsInterrupt);
-        if (typeof response !== "string") {
-          toolMessage = new ToolMessage(
-            "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
-            tool_call_id,
-            "Obtener_pisos_en_venta_dos",
-          );
-        } else {
-          toolMessage = new ToolMessage(
-            response,
-            tool_call_id,
-            "Obtener_pisos_en_venta_dos",
-          );
-        }
+      const response = await getPisos2.invoke(toolArgs);
+      if(typeof response !== "string") {
+        toolMessage = new ToolMessage(
+          "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+          tool_call_id,
+          "Obtener_pisos_en_venta_dos",
+        );
       }
+      else {
+        toolMessage = new ToolMessage(
+          response,
+          tool_call_id,
+          "Obtener_pisos_en_venta_dos",
+        );
+      }
+      // const responseInterrupt = humanNode(lastMessage);
+      // if (
+      //   responseInterrupt.humanResponse &&
+      //   typeof responseInterrupt.humanResponse !== "string" &&
+      //   responseInterrupt.humanResponse.args
+      // ) {
+      //   // const toolArgsInterrupt = responseInterrupt.humanResponse
+      //   //   .args as pisosToolArgs;
+      //   const response = await getPisos2.invoke(toolArgs);
+      //   if (typeof response !== "string") {
+      //     toolMessage = new ToolMessage(
+      //       "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+      //       tool_call_id,
+      //       "Obtener_pisos_en_venta_dos",
+      //     );
+      //   } else {
+      //     toolMessage = new ToolMessage(
+      //       response,
+      //       tool_call_id,
+      //       "Obtener_pisos_en_venta_dos",
+      //     );
+      //   }
+      // }
     } else if (toolName === "universal_info_2025") {
       // const res = await pdfTool.invoke(toolArgs);
       toolMessage = new ToolMessage("res", tool_call_id, "universal_info_2025");
@@ -773,7 +818,7 @@ const toolNodo = async (
   // });
   // console.log("toolMessage: ", toolMessage);
 //@ts-ignore
-  return {  messages: [...messages, toolMessage]  , timestamp: Date.now() };
+  return {  messages: [ toolMessage]  , timestamp: Date.now() };
 };
 
 // const delete_messages = async (state: typeof newState.State) => {

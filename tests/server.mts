@@ -155,7 +155,9 @@ app.post("/agent", async (req, res) => {
 const threadLocks = new Map<string, boolean>();
 app.post("/v1/chat/completions", async (req, res) => {
   const { messages, stream } = req.body;
-  console.log("stream: ", stream);
+  console.log("body");
+  
+  console.dir( req.body, { depth: null, colors: true });
   
 
   const last_message = messages.at(-1);
@@ -211,11 +213,11 @@ app.post("/v1/chat/completions", async (req, res) => {
       { messages: last_message },
       { configurable: { thread_id } }
     );
-    const state = await workflow.getState({
-      configurable: { thread_id },
-    });
-    console.log("state: ", state.values.messages.at(-1));
-    console.log("state: ", state.values.messages.at(-2));
+    // const state = await workflow.getState({
+    //   configurable: { thread_id },
+    // });
+    // console.log("state: ", state.values.messages.at(-2));
+    // console.log("state: ", state.values.messages.at(-1));
     
     if(agentResp.messages.at(-1) instanceof AIMessage ){
         console.log("AIMessage: ");
@@ -231,9 +233,7 @@ app.post("/v1/chat/completions", async (req, res) => {
     console.log("reply: ", reply);
     
       if(reply === ""){
-
         res.write("data: [DONE]\n\n");
-   
         return;
       }
 
@@ -273,6 +273,102 @@ app.post("/v1/chat/completions", async (req, res) => {
     res.end();
   }
 });
+
+// Version con controller
+// const threadLocks = new Map<string, boolean>();
+
+// const threadLocks = new Map<string, AbortController>();
+
+// app.post("/v1/chat/completions", async (req, res) => {
+//   const { messages, stream } = req.body;
+//   const thread_id = "146"; // podrías usar hash del usuario
+
+//   // Cancelar flujo anterior si lo hay
+//   const prev = threadLocks.get(thread_id);
+//   if (prev) {
+//     prev.abort(); // cancela ejecución previa
+//   }
+//   const controller = new AbortController();
+//   threadLocks.set(thread_id, controller);
+
+//   // Manejo de headers SSE
+//   if (!stream) {
+//     res.status(400).json({ error: "Solo soporta stream=true" });
+//     return
+//   }
+
+//   res.setHeader("Content-Type", "text/event-stream");
+//   res.setHeader("Cache-Control", "no-cache");
+//   res.setHeader("Connection", "keep-alive");
+
+//   const heartbeat = setInterval(() => res.write(`: ping\n\n`), 2000);
+
+//   req.on("close", () => {
+//     console.log("[SSE] Cliente cerró la conexión");
+//     controller.abort(); // cancela si cliente cierra conexión
+//     threadLocks.delete(thread_id);
+//     clearInterval(heartbeat);
+//   });
+
+//   try {
+//     // Verificar si el flujo anterior quedó con tool_call pendiente
+//     const state = await workflow.getState({ configurable: { thread_id } });
+//     let lastMsg;
+//     if(state.values.messages && state.values.messages.length > 0){
+//        lastMsg = state.values.messages.at(-1);
+//     }
+
+//     if (lastMsg?.tool_calls?.length) {
+//       const toolCall = lastMsg.tool_calls[0];
+//       const forced = new ToolMessage("Interrumpido", toolCall.id, toolCall.name);
+//       await workflow.invoke({ messages: forced }, {
+//         configurable: { thread_id }
+//       });
+//     }
+
+//     console.log("human message: ", messages.at(-1));
+    
+
+//     const agentResp = await workflow.invoke(
+//       { messages: messages.at(-1) },
+//       { configurable: { thread_id }, signal: controller.signal }
+//     );
+
+//     const reply = agentResp.messages.at(-1)?.content ?? "";
+
+//     if (reply) {
+//       const chunk = {
+//         id: Date.now().toString(),
+//         object: "chat.completion.chunk",
+//         created: Math.floor(Date.now() / 1000),
+//         model: "gpt-4-o",
+//         choices: [{
+//           index: 0,
+//           delta: { role: "assistant", content: reply },
+//           finish_reason: "stop",
+//         }],
+//       };
+
+//       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+//     }
+
+//     res.write("data: [DONE]\n\n");
+//   } catch (err: any) {
+//     console.error("Error:", err);
+//     res.write(`event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`);
+//     res.write("data: [DONE]\n\n");
+//   } finally {
+//     clearInterval(heartbeat);
+//     res.end();
+//     threadLocks.delete(thread_id);
+//   }
+// });
+
+
+
+
+
+
 // let forward = true;
 // app.post("/v1/chat/completions", async (req, res) => {
 //   const { messages, stream } = req.body;
