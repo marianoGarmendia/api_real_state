@@ -15,16 +15,27 @@ export const INMUEBLE_PROPS = [
 ];
 const OPERATORS = ["$eq", "$gt", "$lt", "$gte", "$lte"] as const;
 
-export const ConditionSchema = z.object({
-  operator: z.enum(OPERATORS),
-  value: z.number().nullable(),
-});
+// export const ConditionSchema = z.object({
+//   operator: z.enum(OPERATORS),
+//   value: z.number().nullable(),
+// });
+
+const ConditionSchema = z.union([
+  z.object({
+    operator: z.enum(OPERATORS),
+    value: z.number()
+  }),
+  z.number() // ✅ Esto permitirá [2, 3] también
+]);
 
 /**
  * Genera un esquema de zod dinamicamente para validar un filtro de consulta.
  * @param props: string[] - Propiedades que se pueden filtrar.
  * @returns
  */
+
+
+
 export const  buildQuerySchema = (props: string[]) =>
   z
     .object(
@@ -40,6 +51,7 @@ export const  buildQuerySchema = (props: string[]) =>
  * @returns
  */
 export const buildQueryFilterModel = (querySchema: ZodSchema) => 
+  
     chatModel.withStructuredOutput(querySchema, {
     strict: false,
   })
