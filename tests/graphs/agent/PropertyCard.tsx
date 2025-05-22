@@ -10,7 +10,7 @@ import "./styles.css";
 export const PropertyCard: React.FC<Product> = (props) => (
   <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 mx-2">
     <img
-      src={ props.image_url && "https://blog.wasi.co/wp-content/uploads/2019/07/claves-fotografia-inmobiliaria-exterior-casa-software-inmobiliario-wasi.jpg"}
+      src={ props.image_url || "https://blog.wasi.co/wp-content/uploads/2019/07/claves-fotografia-inmobiliaria-exterior-casa-software-inmobiliario-wasi.jpg"}
       alt={props.direccion}
       className="h-48 w-full object-cover rounded-t-2xl"
     />
