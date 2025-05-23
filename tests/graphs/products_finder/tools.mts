@@ -51,7 +51,8 @@ export const  productsFinder = tool(
       configurable: { thread_id: config.configurable.thread_id },
     });
     // const message_id = state.values.messages.at(-1).id
-    const toolCallId = state.values.messages.at(-1).tool_calls[0].id;
+            const toolCallId = state.values.messages.at(-1).tool_calls.find((call:any) => call.name === "products_finder")?.id;
+
    
     // const ui = typedUi<typeof ComponentMap>(config);
 

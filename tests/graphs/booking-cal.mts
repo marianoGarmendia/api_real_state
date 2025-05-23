@@ -1,12 +1,11 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatOpenAI } from "@langchain/openai";
-// import { empresa } from "./graph";
+import { ToolMessage } from "@langchain/core/messages";
+import { workflow } from "./inmo.mjs";
 
 // const CAL_API_KEY = process.env.CAL_API_KEY;
 // const CAL_ZENTRUM_API_KEY = process.env.CAL_ZENTRUM_API_KEY;
-
-
 
 export const model = new ChatOpenAI({
   model: "gpt-4o",
@@ -28,20 +27,27 @@ interface Data {
 
 // Herramienta para agendar una cita en cal
 export const createbookingTool = tool(
-  async ({ name, start, email }) => {
+  async ({ name, start, email }, config) => {
     const fechaOriginal = new Date(start);
     // Restar 3 horas (3 * 60 * 60 * 1000 milisegundos)
     const fechaAjustada = new Date(
-      fechaOriginal.getTime() + 3 * 60 * 60 * 1000
+      fechaOriginal.getTime() + 3 * 60 * 60 * 1000,
     ).toISOString();
 
+    const state = await workflow.getState({
+      configurable: { thread_id: config.configurable.thread_id },
+    });
+
+    const toolCallId = state.values.messages
+      .at(-1)
+      .tool_calls.find((call: any) => call.name === "createbookingTool")?.id;
+
     console.log("fecha original: " + fechaOriginal.getTime());
-    
-    
+
     // const fechaOriginalIso = fechaOriginal.toISOString();
     console.log("fecha original: " + fechaOriginal);
     console.log("fecha original en ISO: " + fechaOriginal.toISOString());
-    
+
     console.log("fecha ajustada: " + fechaAjustada);
 
     try {
@@ -65,9 +71,18 @@ export const createbookingTool = tool(
       });
 
       const isBooking = await response.json();
-      return JSON.stringify(isBooking);
+
+      return new ToolMessage(
+        JSON.stringify(isBooking),
+        toolCallId,
+        "createbookingTool",
+      );
     } catch (error) {
-      throw new Error("Error al crear la reserva: " + error);
+      return new ToolMessage(
+        "Ha ocurrido un error",
+        toolCallId,
+        "createbookingTool",
+      );
     }
   },
   {
@@ -80,7 +95,7 @@ export const createbookingTool = tool(
         .describe("Fecha y hora de la reserva en formato ISO 8601 "),
       email: z.string().describe("Email del asistente"),
     }),
-  }
+  },
 );
 
 // Herramienta para obtener la disponibilidad del evento en CAL
@@ -92,23 +107,23 @@ export const getAvailabilityTool = tool(
 
     try {
       const response = await fetch(
-        `https://api.cal.com/v2/slots/available?startTime=${startTime}&endTime=${endTime}&eventTypeId=1793238`,// aca va empresa.eventTypeId
+        `https://api.cal.com/v2/slots/available?startTime=${startTime}&endTime=${endTime}&eventTypeId=1793238`, // aca va empresa.eventTypeId
         {
           method: "GET",
           headers: {
             Authorization: "Bearer cal_live_c828d63ceb63f84f83184575271493e0",
           },
-        }
+        },
       );
 
       const isAvailability = await response.json();
       console.log("isAvailability: ");
       console.dir(isAvailability, { depth: null });
-      
+
       console.log("disponibilidad: ");
       const data: Data = isAvailability.data;
       console.dir(data, { depth: null });
-      
+
       // Array para almacenar los horarios ajustados
       const horarios_disponibles: string[] = [];
 
@@ -119,23 +134,19 @@ export const getAvailabilityTool = tool(
           // Crear un objeto Date a partir del string de tiempo
           const fechaOriginal = new Date(slot.time);
           // Restar 3 horas (3 * 60 * 60 * 1000 milisegundos)
-          const fechaAjustada = new Date(
-            fechaOriginal.getTime() 
-          );
+          const fechaAjustada = new Date(fechaOriginal.getTime());
           // Formatear la fecha ajustada a una cadena ISO y agregar al array
           horarios_disponibles.push(fechaAjustada.toISOString());
         });
       }
       console.log("horarios disponibles despues de parsear: ");
-      
+
       console.log(horarios_disponibles);
-      if(horarios_disponibles.length === 0) {
+      if (horarios_disponibles.length === 0) {
         return "No hay horarios disponibles para la fecha seleccionada";
-      }else{
+      } else {
         return JSON.stringify(horarios_disponibles);
-
       }
-
     } catch (error) {
       throw new Error("Error al obtener la disponibilidad: " + error);
     }
@@ -148,15 +159,15 @@ export const getAvailabilityTool = tool(
       startTime: z
         .string()
         .describe(
-          "Fecha y hora de inicio de la disponibilidad en formato ISO 8601,  Ejemplo: 2025-02-13T16:00:00.000Z"
+          "Fecha y hora de inicio de la disponibilidad en formato ISO 8601,  Ejemplo: 2025-02-13T16:00:00.000Z",
         ),
       endTime: z
         .string()
         .describe(
-          "Fecha y hora de fin de la disponibilidad en formato ISO 8601, (Ej: 2025-02-13T16:00:00.000Z)"
+          "Fecha y hora de fin de la disponibilidad en formato ISO 8601, (Ej: 2025-02-13T16:00:00.000Z)",
         ),
     }),
-  }
+  },
 );
 
 // export const check_availability_by_professional_tool = tool(
