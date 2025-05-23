@@ -50,6 +50,11 @@ export const empresa = {
   context: contexts.clinica.context,
 };
 
+interface InfoUsuario {
+  nombre?: string,
+  email?:string,
+  telefono?:string
+}
 
 
 
@@ -61,6 +66,7 @@ const stateAnnotation = MessagesAnnotation;
 const newState = Annotation.Root({
   ...stateAnnotation.spec,
   summary: Annotation<string>,
+  info_usuario: Annotation<InfoUsuario>,
   property: Annotation<object>,
   interruptResponse: Annotation<string>,
   ui: Annotation({ reducer: uiMessageReducer, default: () => [] }),
