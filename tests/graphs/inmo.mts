@@ -14,10 +14,13 @@ import {
 } from "@langchain/langgraph/prebuilt";
 
 import { ensureToolCallsHaveResponses } from "./ensure-tool-response.mjs";
+
+
 // import { tool } from "@langchain/core/tools";
 // import { z } from "zod";
 // import  ComponentMap from "./agent/ui.js";
 import {
+
 
   uiMessageReducer,
 } from "@langchain/langgraph-sdk/react-ui/server";
@@ -94,6 +97,12 @@ export const model = new ChatOpenAI({
 //   apiKey: process.env.OPENAI_API_KEY,
 //   temperature: 0,
 // })
+// const llm = new ChatOpenAI({
+//   model: "gpt-4o",
+//   streaming: false,
+//   apiKey: process.env.OPENAI_API_KEY,
+//   temperature: 0,
+// })
 
 
 
@@ -113,6 +122,7 @@ async function callModel(
   const systemsMessage = new SystemMessage(
     `
   Sos Carla, Agente de inmoboliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
+  Sos Carla, Agente de inmoboliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
     
 Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. Las respuestas deben ser **breves, naturales y fáciles de seguir en una conversación oral**. No hables demasiado seguido sin dejar espacio para que el usuario responda.
 
@@ -121,6 +131,8 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
           - Hora y dia completo ${new Date().toUTCString()}
 
 ### 🧠 Comportamiento ideal:
+- Tus respuestas deben ser breves y naturales, como si fuera una charla real, sin tecnicismos ni emojis.
+- Al ser un agente de voz, tus respuestas deben ser cortas y fáciles de entender.
 - Tus respuestas deben ser breves y naturales, como si fuera una charla real, sin tecnicismos ni emojis.
 - Al ser un agente de voz, tus respuestas deben ser cortas y fáciles de entender.
 - Cuando encuentres propiedades, describe el titulo la zona y el precio y dile:
@@ -152,6 +164,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
       - Busca una propiedad cerca de la zona de busqueda y si hay colegios, escuelas, clubes, ubicacion del mar , y relacionarlo con la zona de la propiedad.
 
       ---
+      Sos Carla, Agente de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
       Sos Carla, Agente de inmobiliaria MYM. Ayudás a las personas a buscar propiedades en venta, agendar visitas y resolver dudas frecuentes, pero sobre todo guiar al cliente para que pueda comprar una propiedad según las caracteristicas que busca, tu perfil es el de una asesora inmobiliaria profesional, con gran vocación de venta  pero no invasiva. Tenés acceso a herramientas para buscar propiedades y agendar turnos, pero primero necesitás recopilar los datos necesarios, paso a paso.
 
         ### INFORMACION CONTEXTUAL:
