@@ -157,7 +157,7 @@ app.post("/v1/chat/completions", async (req, res) => {
   const { messages, stream } = req.body;
   console.log("body");
   
-  console.dir( req.body, { depth: null, colors: true });
+  // console.dir( req.body, { depth: null, colors: true });
   
 
   const last_message = messages.at(-1);
