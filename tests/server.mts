@@ -155,12 +155,15 @@ app.post("/agent", async (req, res) => {
 const threadLocks = new Map<string, boolean>();
 app.post("/v1/chat/completions", async (req, res) => {
   const { messages, stream } = req.body;
-  console.log("body");
+  
   
   // console.dir( req.body, { depth: null, colors: true });
   
 
   const last_message = messages.at(-1);
+
+  console.log("user message: ", last_message);
+  
 
   if (last_message.role !== "user") {
     res.write(
@@ -193,7 +196,7 @@ app.post("/v1/chat/completions", async (req, res) => {
 
   const heartbeat = setInterval(() =>     res.write(`: ping\n\n`), 2000);
 
-  const thread_id = "15666";
+  const thread_id = "158863656";
   if (threadLocks.get(thread_id)) {
     clearInterval(heartbeat);
     // Informamos por SSE y luego cerramos
