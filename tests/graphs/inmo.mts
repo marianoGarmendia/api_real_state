@@ -65,7 +65,7 @@ interface InfoUsuario {
 
 
 
-const tools = [getAvailabilityTool, createbookingTool, productsFinder, obtener_info_usuario];
+const tools = [getAvailabilityTool, createbookingTool, getPisos2, obtener_info_usuario];
 
 const stateAnnotation = MessagesAnnotation;
 
@@ -327,7 +327,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   - si hay un numero como 1.5 debes cambiarlo por "uno punto cinco"
   - Si dice 2 hab. debes cambiarlo por "dos habitaciones"
   - Si dice 2 baños debes cambiarlo por "dos baños"
-  - sis dice MYM debes cambiarlo por "inmobiliaria EME Y EME"
+  - 
   - las siglas deben cambiarse por la palabra completa, si dice "CRM" debes cambiarlo por "sistema de gestión de clientes"
   y asi con cada simbolo o palabra que no entienda el agente de voz.
 
@@ -693,7 +693,7 @@ const toolNodo = async (
 
     if (toolName === "Obtener_pisos_en_venta_dos") {
       const response = await getPisos2.invoke(toolArgs);
-      if(typeof response !== "string") {
+      if(!response ) {
         toolMessage = new ToolMessage(
           "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
           tool_call_id,

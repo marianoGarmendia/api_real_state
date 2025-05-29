@@ -8,7 +8,7 @@ import threads from "./api/threads.mjs";
 import assistants from "./api/assistants.mjs";
 import store from "./api/store.mjs";
 import meta from "./api/meta.mjs";
-
+import  elevenlabs  from "./api/elevenlabs.mjs"
 import { truncate, conn as opsConn } from "./storage/ops.mjs";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
@@ -77,6 +77,8 @@ export async function startServer(options: z.infer<typeof StartServerSchema>) {
 
   const app = new Hono();
 
+
+
   // Loopback fetch used by webhooks and custom routes
   bindLoopbackFetch(app);
 
@@ -95,7 +97,8 @@ export async function startServer(options: z.infer<typeof StartServerSchema>) {
   app.use(cors(options.http?.cors));
   app.use(requestLogger());
   app.use(ensureContentType());
-
+  
+  
   app.post(
     "/internal/truncate",
     zValidator(
@@ -110,13 +113,14 @@ export async function startServer(options: z.infer<typeof StartServerSchema>) {
     ),
     (c) => {
       const { runs, threads, assistants, checkpointer, store } =
-        c.req.valid("json");
-
+      c.req.valid("json");
+      
       truncate({ runs, threads, assistants, checkpointer, store });
       return c.json({ ok: true });
     },
   );
-
+  
+  app.route("/", elevenlabs); // 👈 esto registra el endpoint bajo /v1/chat/completions
   if (!options.http?.disable_meta) app.route("/", meta);
   if (!options.http?.disable_assistants) app.route("/", assistants);
   if (!options.http?.disable_runs) app.route("/", runs);

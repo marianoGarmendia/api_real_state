@@ -208,7 +208,7 @@ app.post("/v1/chat/completions", async (req, res) => {
   try {
     
     
-   
+   threadLocks.set(thread_id, true);
     const agentResp = await workflow.invoke(
       { messages: last_message },
       { configurable: { thread_id } }
@@ -259,6 +259,7 @@ app.post("/v1/chat/completions", async (req, res) => {
 
     res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     res.write("data: [DONE]\n\n");
+   
     // res.end()
 
   } catch (err:any) {
@@ -269,7 +270,7 @@ app.post("/v1/chat/completions", async (req, res) => {
     console.log("Error en /v1/chat/completions:", err);
   } finally {
     clearInterval(heartbeat);
-
+     threadLocks.set(thread_id, false); // ← Liberar el lock
     res.end();
   }
 });
@@ -286,7 +287,7 @@ app.post("/v1/chat/completions", async (req, res) => {
 //   // Cancelar flujo anterior si lo hay
 //   const prev = threadLocks.get(thread_id);
 //   if (prev) {
-//     prev.abort(); // cancela ejecución previa
+//     prev.abort(); // cancela ejecución previaHtoolno
 //   }
 //   const controller = new AbortController();
 //   threadLocks.set(thread_id, controller);

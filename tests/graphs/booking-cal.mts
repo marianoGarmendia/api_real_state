@@ -72,17 +72,11 @@ export const createbookingTool = tool(
 
       const isBooking = await response.json();
 
-      return new ToolMessage(
-        JSON.stringify(isBooking),
-        toolCallId,
-        "createbookingTool",
-      );
+      return JSON.stringify(isBooking);
+
+      
     } catch (error) {
-      return new ToolMessage(
-        "Ha ocurrido un error",
-        toolCallId,
-        "createbookingTool",
-      );
+      return "Ha ocurrido un error en la conexion con el calendario de reservas: " + error;
     }
   },
   {
