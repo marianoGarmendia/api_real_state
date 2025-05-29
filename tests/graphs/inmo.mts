@@ -2,9 +2,11 @@ import {
   AIMessage,
   SystemMessage,
   ToolMessage,
-  type BaseMessageLike,
+  
 } from "@langchain/core/messages";
 // import { v4 as uuidv4 } from "uuid";
+
+
 
 import {
   ActionRequest,
@@ -341,7 +343,7 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   
   const response = await model.invoke([systemsMessage, ...messages]);
   
-  console.log("response: ", response);
+  // console.log("response: ", response);
   
   const messagesWithToolResponses = ensureToolCallsHaveResponses(messages);
   // const cadenaJSON = JSON.stringify(messages);
@@ -671,7 +673,7 @@ const toolNodo = async (
   config: LangGraphRunnableConfig,
 ) => {
   const { messages } = state;
-  // const ui = typedUi(config);
+ 
   const lastMessage = messages[messages.length - 1] as AIMessage;
   console.log("toolNodo");
   console.log("-----------------------");
@@ -706,6 +708,9 @@ const toolNodo = async (
           tool_call_id,
           "Obtener_pisos_en_venta_dos",
         );
+
+        
+
       }
       // const responseInterrupt = humanNode(lastMessage);
       // if (

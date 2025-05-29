@@ -348,10 +348,10 @@ export const getPisos2 = tool(
         
       
       if (topMatches.length > 0) {
-        return JSON.stringify(topMatches);
+        return  JSON.stringify(topMatches)
       }
 
-      return "Lamentablemente no hay propiedades que cumplan con los requisitos que busca.";
+      return "Lamentablemente no hay propiedades que cumplan con los requisitos que busca."
 
       
     } catch (error) {

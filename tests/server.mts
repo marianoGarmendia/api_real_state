@@ -193,7 +193,7 @@ app.post("/v1/chat/completions", async (req, res) => {
 
   const heartbeat = setInterval(() =>     res.write(`: ping\n\n`), 2000);
 
-  const thread_id = "146";
+  const thread_id = "15666";
   if (threadLocks.get(thread_id)) {
     clearInterval(heartbeat);
     // Informamos por SSE y luego cerramos

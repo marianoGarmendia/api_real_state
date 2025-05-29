@@ -115,7 +115,7 @@ elevenlabs.post("/v1/chat/completions", async (c) => {
   const streamResponse = new ReadableStream({
     async start(controller) {
       const encoder = new TextEncoder();
-      const thread_id = "4666";
+      const thread_id = "477";
 
       if (threadLocks.get(thread_id)) {
         controller.enqueue(
@@ -136,6 +136,8 @@ elevenlabs.post("/v1/chat/completions", async (c) => {
       }, 2000);
 
       try {
+        console.log("Invocando workflow con el último mensaje:", last_message);
+        
         const agentResp = await workflow.invoke(
           { messages: last_message },
           { configurable: { thread_id } },
