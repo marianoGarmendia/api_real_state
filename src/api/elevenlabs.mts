@@ -7,7 +7,13 @@ import { AIMessage } from '@langchain/core/messages';
 const elevenlabs = new Hono();
 const threadLocks = new Map<string, boolean>();
 
+let thread = false
+
 elevenlabs.post('/v1/chat/completions', async (c) => {
+  console.log("[POST] /v1/chat/completions body messages:");
+  
+  
+  
   let body;
   try {
     body = await c.req.json();
@@ -16,6 +22,9 @@ elevenlabs.post('/v1/chat/completions', async (c) => {
   }
 
   const { messages, stream: streamFlag } = body;
+
+  console.log(body);
+  
   const lastMessage = messages?.at(-1);
 
   if (!streamFlag) {
@@ -35,8 +44,11 @@ elevenlabs.post('/v1/chat/completions', async (c) => {
       }
     );
   }
+  let thread_id = ""
+  if(!thread){
+     thread_id = lastMessage; // Puedes ajustar esto según tus necesidades
 
-  const thread_id = '158863656'; // Puedes ajustar esto según tus necesidades
+  }
 
   return stream(c, async (stream) => {
     const encoder = new TextEncoder();

@@ -5,7 +5,7 @@ import {config} from "dotenv";
 config()
 
 
-console.log(`Starting server with env: ${JSON.stringify(process.env.OPENAI_API_KEY)}`);
+console.log(`Starting server with env:`);
 
 export async function spawnServer(
   args: {
