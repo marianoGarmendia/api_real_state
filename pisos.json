@@ -1463,7 +1463,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "370000",
+    "PRECIO": "370000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -3009,7 +3009,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "140000",
+    "PRECIO": "140000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -4558,7 +4558,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "80000",
+    "PRECIO": "80000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -6120,7 +6120,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "195000",
+    "PRECIO": "195000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -7704,7 +7704,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "5900000",
+    "PRECIO": "5900000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -9248,7 +9248,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "530000",
+    "PRECIO": "530000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -10801,7 +10801,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "395000",
+    "PRECIO": "395000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -12396,7 +12396,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "4500",
+    "PRECIO": "4500.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -13991,7 +13991,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "325000",
+    "PRECIO": "325000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -15551,7 +15551,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "145000",
+    "PRECIO": "145000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -17127,7 +17127,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "7000000",
+    "PRECIO": "7000000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -18706,7 +18706,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "2750000",
+    "PRECIO": "2750000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -20247,7 +20247,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "399000",
+    "PRECIO": "399000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -21832,7 +21832,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "1900000",
+    "PRECIO": "1900000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -23387,7 +23387,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "86000",
+    "PRECIO": "86000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -24965,7 +24965,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "950000",
+    "PRECIO": "950000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -26509,7 +26509,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "550000",
+    "PRECIO": "550000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -28104,7 +28104,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "150",
+    "PRECIO": "150.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -29657,7 +29657,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "9000",
+    "PRECIO": "9000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -31256,7 +31256,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "5000",
+    "PRECIO": "5000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -32848,7 +32848,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "420000",
+    "PRECIO": "420000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -34408,7 +34408,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "165000",
+    "PRECIO": "165000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -35948,7 +35948,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "110000",
+    "PRECIO": "110000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -37495,7 +37495,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "379000",
+    "PRECIO": "379000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -39086,7 +39086,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "900000",
+    "PRECIO": "900000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -40659,7 +40659,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "2000",
+    "PRECIO": "2000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -42256,7 +42256,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "800000",
+    "PRECIO": "800000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -43845,7 +43845,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "230000",
+    "PRECIO": "230000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -45435,7 +45435,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "4900",
+    "PRECIO": "4900.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -47028,7 +47028,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "15000",
+    "PRECIO": "15000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -48579,7 +48579,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "1500",
+    "PRECIO": "1500.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -50165,7 +50165,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "359000",
+    "PRECIO": "359000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -51756,7 +51756,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "10000",
+    "PRECIO": "10000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -53335,7 +53335,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "159000",
+    "PRECIO": "159000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -54877,7 +54877,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "240000",
+    "PRECIO": "240000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -56453,7 +56453,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "600000",
+    "PRECIO": "600000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -57997,7 +57997,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "4200",
+    "PRECIO": "4200.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -59591,7 +59591,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "130000",
+    "PRECIO": "130000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -61145,7 +61145,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "145000",
+    "PRECIO": "145000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -62694,7 +62694,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "310000",
+    "PRECIO": "310000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -64242,7 +64242,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "410000",
+    "PRECIO": "410000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -65839,7 +65839,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "3325000",
+    "PRECIO": "3325000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -67436,7 +67436,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "650000",
+    "PRECIO": "650000.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -69033,7 +69033,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "1250",
+    "PRECIO": "1250.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -70597,7 +70597,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "23500",
+    "PRECIO": "23500.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -72156,7 +72156,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "2500",
+    "PRECIO": "2500.00",
     "PRECIOS": null,
     "R_IMG": [
       {
@@ -73745,7 +73745,7 @@
     "GRUPO": null,
     "PAQUETE": false,
     "ID_PRODUCTOS_PAQUETE": null,
-    "PRECIO": "1326",
+    "PRECIO": "1326.00",
     "PRECIOS": null,
     "R_IMG": [
       {

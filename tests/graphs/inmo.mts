@@ -687,7 +687,7 @@ const toolNodo = async (
     const toolArgs = lastMessage.tool_calls[0].args as pisosToolArgs & {
       query: string;
     } & { startTime: string; endTime: string } & {
-      name: string;
+      nameUser: string;
       start: string;
       email: string;
     };
@@ -742,49 +742,45 @@ const toolNodo = async (
       const res = await getAvailabilityTool.invoke(toolArgs);
       toolMessage = new ToolMessage(res, tool_call_id, "getAvailabilityTool");
     } else if (toolName === "createbookingTool") {
-      const responseInterruptBooking = humanNodeBooking(lastMessage);
-      if (
-        responseInterruptBooking?.humanResponse &&
-        typeof responseInterruptBooking.humanResponse !== "string" &&
-        responseInterruptBooking.humanResponse.args
-      ) {
-        const toolArgsInterrupt = responseInterruptBooking.humanResponse
-          .args as ActionRequest;
-        console.log("tollArgsInterrupt: ", toolArgsInterrupt);
-        if (toolArgsInterrupt.args) {
-          const { name, start, email } = toolArgsInterrupt.args as booking;
-          const response = await createbookingTool.invoke({
-            name,
-            start,
-            email,
-          });
-          if (typeof response !== "string") {
+      // const responseInterruptBooking = humanNodeBooking(lastMessage);
+      // if (
+      //   responseInterruptBooking?.humanResponse &&
+      //   typeof responseInterruptBooking.humanResponse !== "string" &&
+      //   responseInterruptBooking.humanResponse.args
+      // ) {
+      //   const toolArgsInterrupt = responseInterruptBooking.humanResponse
+      //     .args as ActionRequest;
+      //   console.log("tollArgsInterrupt: ", toolArgsInterrupt);
+      //   if (toolArgsInterrupt.args) {
+      //     const { name, start, email } = toolArgsInterrupt.args as booking;
+          const response = await createbookingTool.invoke(toolArgs);
+          if (typeof response.response !== "string") {
             toolMessage = new ToolMessage(
               "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
-              tool_call_id,
+              response.toolCallId,
               "createbookingTool",
             );
           } else {
             toolMessage = new ToolMessage(
-              response,
-              tool_call_id,
+              response.response,
+               response.toolCallId,
               "createbookingTool",
             );
           }
-        } else {
-          toolMessage = new ToolMessage(
-            "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
-            tool_call_id,
-            "createbookingTool",
-          );
-        }
-      } else {
-        toolMessage = new ToolMessage(
-          "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
-          tool_call_id,
-          "createbookingTool",
-        );
-      }
+      //   } else {
+      //     toolMessage = new ToolMessage(
+      //       "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+      //       tool_call_id,
+      //       "createbookingTool",
+      //     );
+      //   }
+      // } else {
+      //   toolMessage = new ToolMessage(
+      //     "Hubo un problema al consultar las propiedades intentemoslo nuevamente",
+      //     tool_call_id,
+      //     "createbookingTool",
+      //   );
+      // }
     } else if (toolName === "products_finder") {
       console.log("products_finder");
       console.log(lastMessage);

@@ -1,7 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import { ChatOpenAI } from "@langchain/openai";
-import { ToolMessage } from "@langchain/core/messages";
+
 import { workflow } from "./inmo.mjs";
 
 // const CAL_API_KEY = process.env.CAL_API_KEY;
@@ -27,7 +27,7 @@ interface Data {
 
 // Herramienta para agendar una cita en cal
 export const createbookingTool = tool(
-  async ({ name, start, email }, config) => {
+  async ({ nameUser, start, email }, config) => {
     const fechaOriginal = new Date(start);
     // Restar 3 horas (3 * 60 * 60 * 1000 milisegundos)
     const fechaAjustada = new Date(
@@ -60,7 +60,7 @@ export const createbookingTool = tool(
         },
         body: JSON.stringify({
           attendee: {
-            name: name,
+            name: nameUser,
             timeZone: "Europe/Madrid",
             language: "es",
             email: email,
@@ -69,21 +69,26 @@ export const createbookingTool = tool(
           start: fechaAjustada, // Asegúrate de que start es un string en formato "YYYY-MM-DDTHH:mm:ss.SSSZ"
         }),
       });
-
+      
+      if (!response.ok) {
+        console.error("Error al crear la reserva:", response.statusText);
+        return { toolCallId, response: "Error al crear la reserva" };
+      }
       const isBooking = await response.json();
 
-      return JSON.stringify(isBooking);
+
+      return{toolCallId:toolCallId , response:  JSON.stringify(isBooking)}
 
       
     } catch (error) {
-      return "Ha ocurrido un error en la conexion con el calendario de reservas: " + error;
+      return { toolCallId ,  response: "Ha ocurrido un error en la conexion con el calendario de reservas: " }
     }
   },
   {
     name: "createbookingTool",
     description: "Crea una reserva en Cal",
     schema: z.object({
-      name: z.string().describe("Nombre del asistente"),
+      nameUser: z.string().describe("Nombre del asistente"),
       start: z
         .string()
         .describe("Fecha y hora de la reserva en formato ISO 8601 "),

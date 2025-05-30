@@ -36,7 +36,7 @@ fs.ensureDirSync("audios"); // crea la carpeta si no existe
 
 import { workflow } from "./graphs/inmo.mjs";
 import { AIMessage, ToolMessage } from "@langchain/core/messages";
-import { a } from "vitest/dist/chunks/suite.d.FvehnV49.js";
+
 // import { text } from "stream/consumers";
 // import { HumanMessage } from "@langchain/core/messages";
 
@@ -155,21 +155,18 @@ app.post("/agent", async (req, res) => {
 const threadLocks = new Map<string, boolean>();
 app.post("/v1/chat/completions", async (req, res) => {
   const { messages, stream } = req.body;
-  
-  
+
   // console.dir( req.body, { depth: null, colors: true });
-  
 
   const last_message = messages.at(-1);
 
   console.log("user message: ", last_message);
-  
 
   if (last_message.role !== "user") {
     res.write(
       `event: error\ndata: ${JSON.stringify({
         message: "El último mensaje debe ser del usuario",
-      })}\n\n`
+      })}\n\n`,
     );
     res.write("data: [DONE]\n\n");
     return;
@@ -183,97 +180,173 @@ app.post("/v1/chat/completions", async (req, res) => {
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-    // En tu handler de /chat/completions
-    req.on("close", (e:any) => {
-      console.log("[SSE] Cliente/proxy cerró la conexión");
-      console.log("[SSE] Close:", e);
-      threadLocks.set(thread_id, false);
+  // En tu handler de /chat/completions
+  req.on("close", (e: any) => {
+    console.log("[SSE] Cliente/proxy cerró la conexión");
+    console.log("[SSE] Close:", e);
+    threadLocks.set(thread_id, false);
+  });
+  res.on("error", (err) => {
+    console.error("[SSE] Error en el stream:", err);
+  });
 
-    });
-    res.on("error", (err) => {
-      console.error("[SSE] Error en el stream:", err);
-    });
-
-  const heartbeat = setInterval(() =>     res.write(`: ping\n\n`), 2000);
+  const heartbeat = setInterval(() => res.write(`: ping\n\n`), 2000);
 
   const thread_id = "158863656";
   if (threadLocks.get(thread_id)) {
     clearInterval(heartbeat);
     // Informamos por SSE y luego cerramos
-    res.write(`event: error\ndata: ${JSON.stringify({
-      message: "Espera un momento, estoy procesando información",
-    })}\n\n`);
+    res.write(
+      `event: error\ndata: ${JSON.stringify({
+        message: "Espera un momento, estoy procesando información",
+      })}\n\n`,
+    );
     res.write("data: [DONE]\n\n");
     res.end();
     return;
   }
 
   try {
-    
-    
-   threadLocks.set(thread_id, true);
+    threadLocks.set(thread_id, true);
     const agentResp = await workflow.invoke(
       { messages: last_message },
-      { configurable: { thread_id } }
+      { configurable: { thread_id } },
     );
-    // const state = await workflow.getState({
-    //   configurable: { thread_id },
-    // });
-    // console.log("state: ", state.values.messages.at(-2));
-    // console.log("state: ", state.values.messages.at(-1));
-    
-    if(agentResp.messages.at(-1) instanceof AIMessage ){
-        console.log("AIMessage: ");
 
-    }else if(agentResp.messages.at(-1) instanceof ToolMessage){
-        console.log("ToolMessage: ");
-    }else{
-        console.log("Human message");
+    if (agentResp.messages.at(-1) instanceof AIMessage) {
+      console.log("AIMessage: ");
+    } else if (agentResp.messages.at(-1) instanceof ToolMessage) {
+      console.log("ToolMessage: ");
+    } else {
+      console.log("Human message");
     }
+    // --------- original -----------------------------------------------------------------------
 
-    const reply =
-      agentResp.messages.at(-1)?.content;
-    console.log("reply: ", reply);
-    
-      if(reply === ""){
-        res.write("data: [DONE]\n\n");
-        return;
+    let finalReply = "";
+    let done = false;
+
+    while (!done) {
+      const last = agentResp.messages.at(-1);
+      console.log("[Agente] Último mensaje:", last);
+      console.log("contendo:", last?.content);
+
+      if (!last) {
+        console.warn("[Agente] No hay mensaje final, cerrando.");
+        break;
       }
 
-    // construir chunk
-    const id = Date.now().toString();
-    const created = Math.floor(Date.now() / 1000);
-    const chunk = {
-      id,
-      object: "chat.completion.chunk",
-      created,
-      model: "gpt-4-o",
-      choices: [
-        {
-          index: 0,
-          delta: { role: "assistant", content: reply === "" ? "Muy bien, voy a realizar la búsqueda espera un momento por favor" : reply },
-          finish_reason: "stop",
-        },
-      ],
-    };
+      if (last instanceof AIMessage) {
+        if (last.tool_calls?.length && !last.content) {
+          console.log("[Agente] Llamadas a herramientas iniciadas");
 
-    console.log("send a elevenlabs");
+          // 🔊 Emitimos un mensaje temporal al frontend
+          const tempChunk = {
+            id: Date.now().toString(),
+            object: "chat.completion.chunk",
+            created: Math.floor(Date.now() / 1000),
+            model: "gpt-4-o",
+            choices: [
+              {
+                index: 0,
+                delta: {
+                  role: "assistant",
+                  content:
+                    "Entendido. Estoy buscando esa información, por favor espera un momento.",
+                },
+                finish_reason: null,
+              },
+            ],
+          };
+          res.write(`data: ${JSON.stringify(tempChunk)}\n\n`);
+
+          console.log("invokando al agente con [] para continuar el hilo");
+
+          // Esperamos nuevo mensaje del agente
+          const state = await workflow.invoke(
+            { messages: [] }, // langgraph continúa el hilo solo con el thread_id
+            { configurable: { thread_id } },
+          );
+          console.log("state: ", state);
+
+          continue;
+        }
+      }
+
+      if (last instanceof AIMessage && last.content) {
+        finalReply = last.content as string;
+        done = true;
+        break;
+      } else {
+        console.warn("[Agente] No se obtuvo respuesta útil.");
+        done = true;
+      }
+    }
+
+    // ✅ Enviar respuesta final al frontend
+    if (finalReply !== "") {
+      const chunk = {
+        id: Date.now().toString(),
+        object: "chat.completion.chunk",
+        created: Math.floor(Date.now() / 1000),
+        model: "gpt-4-o",
+        choices: [
+          {
+            index: 0,
+            delta: { role: "assistant", content: finalReply },
+            finish_reason: "stop",
+          },
+        ],
+      };
+      console.log("send a elevenlabs");
+
+      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    }
+    res.write("data: [DONE]\n\n");
+
+    // ------------------------------------------------------------------ original ----------
+    // const reply =
+    //   agentResp.messages.at(-1)?.content;
+    // console.log("reply: ", reply);
+
+    //   if(reply === ""){
+
+    //     res.write("data: [DONE]\n\n");
+    //     return;
+    //   }
+
+    // // construir chunk
+    // const id = Date.now().toString();
+    // const created = Math.floor(Date.now() / 1000);
+    // const chunk = {
+    //   id,
+    //   object: "chat.completion.chunk",
+    //   created,
+    //   model: "gpt-4-o",
+    //   choices: [
+    //     {
+    //       index: 0,
+    //       delta: { role: "assistant", content: reply === "" ? "Muy bien, voy a realizar la búsqueda espera un momento por favor" : reply },
+    //       finish_reason: "stop",
+    //     },
+    //   ],
+    // };
+
+    // console.log("send a elevenlabs");
     // console.dir(chunk, { depth: null, colors: true });
 
-    res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-    res.write("data: [DONE]\n\n");
-   
-    // res.end()
+    // res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    // res.write("data: [DONE]\n\n");
 
-  } catch (err:any) {
+    // res.end()
+  } catch (err: any) {
     res.write(
-      `event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`
+      `event: error\ndata: ${JSON.stringify({ message: err.message })}\n\n`,
     );
     res.write("data: [DONE]\n\n");
     console.log("Error en /v1/chat/completions:", err);
   } finally {
     clearInterval(heartbeat);
-     threadLocks.set(thread_id, false); // ← Liberar el lock
+    threadLocks.set(thread_id, false); // ← Liberar el lock
     res.end();
   }
 });
@@ -331,7 +404,6 @@ app.post("/v1/chat/completions", async (req, res) => {
 //     }
 
 //     console.log("human message: ", messages.at(-1));
-    
 
 //     const agentResp = await workflow.invoke(
 //       { messages: messages.at(-1) },
@@ -367,11 +439,6 @@ app.post("/v1/chat/completions", async (req, res) => {
 //     threadLocks.delete(thread_id);
 //   }
 // });
-
-
-
-
-
 
 // let forward = true;
 // app.post("/v1/chat/completions", async (req, res) => {
@@ -425,26 +492,22 @@ app.post("/v1/chat/completions", async (req, res) => {
 //   }
 // console.log("last_message: ", last_message);
 
-
 //   try {
 //     const stream = await workflow.stream(
 //       { messages: last_message },
 //       { configurable: { thread_id }, streamMode: "messages" },
-   
+
 //     );
 
 //     console.log("stream: ", stream);
-    
 
 //     for await (const step of stream) {
 //       // Identifica los mensajes generados por el agente
 //       // console.log("step: ", step[0]);
-      
+
 //       // if (step.data && step.data.chunk ) {
 //       //  console.log("step data chunk: ", step.data.chunk);
 //       //  console.log("step data tool_calls : ", step.data.chunk.tool_calls);
-       
-       
 
 //         console.log("event: ", step.event);
 //         // console.log("data: ", step.data);
@@ -452,9 +515,7 @@ app.post("/v1/chat/completions", async (req, res) => {
 
 //         //   console.log("tools: ", step.data.chunk.tools.messages);
 //         // }
-        
-        
-        
+
 //           // const partial = step.data.chunk.content;
 //           const partial = step[0].content;
 //           console.log("partial: ", partial);
@@ -464,8 +525,6 @@ app.post("/v1/chat/completions", async (req, res) => {
 //             return;
 //           }
 
-       
-        
 //             const chunk = {
 //               id: Date.now().toString(),
 //               object: "chat.completion.chunk",
@@ -479,25 +538,19 @@ app.post("/v1/chat/completions", async (req, res) => {
 //                 },
 //               ],
 //             };
-  
+
 //             res.write(`data: ${JSON.stringify(chunk)}\n\n`);
 
-          
-          
-          
-          
 //           // if (partial === "") {
 //           //   res.write("data: [DONE]\n\n");
 //           //   return;
 //           // }
 
-          
-        
 //       // }
 //       // Puedes emitir ToolMessages o manejar otras fases aquí también si es útil para feedback temprano
 //     }
 //     console.log("finde de stream DONE");
-    
+
 //     res.write("data: [DONE]\n\n");
 //     res.end();
 
