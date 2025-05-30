@@ -8,12 +8,12 @@ import {
 
 
 
-import {
-  ActionRequest,
-  HumanInterrupt,
-  HumanInterruptConfig,
-  HumanResponse,
-} from "@langchain/langgraph/prebuilt";
+// import {
+//   ActionRequest,
+//   HumanInterrupt,
+//   HumanInterruptConfig,
+//   HumanResponse,
+// } from "@langchain/langgraph/prebuilt";
 
 import { ensureToolCallsHaveResponses } from "./ensure-tool-response.mjs";
 
@@ -32,7 +32,7 @@ import {
   MemorySaver,
   MessagesAnnotation,
   StateGraph,
-  interrupt,
+ 
 } from "@langchain/langgraph";
 import { formatMessages } from "./agent/formatted-messages.mjs";
 import { LangGraphRunnableConfig } from "@langchain/langgraph";
@@ -390,29 +390,29 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
 //   },
 
 
-const systemPromt = new SystemMessage(
-  `Eres un evaluador de respuestas  y debes resumir y estructurar ésta respuesta para que sea procesada por un agente de voz, es decir, que el texto que respondas de esta evaluacion del mensaje debe ser breve, claro y conciso, como si fuera una charla real, sin tecnicismos ni emojis.
-  Tu respuesta va a ser hablada directamente al usuario por ende no debes usar emojis ni tecnicismos, solo lo que el usuario necesita saber.
-  Además debes modificar ciertas palabras o simbolos para que el agente de voz lo entienda.
-  Por ejemplo: si en el mensaje hay un signo de $ o de €, debes cambiarlo por la palabra "euros" o "dolares" respectivamente.
-  Si hay un signo de % debes cambiarlo por la palabra "porciento" o "porcentaje" respectivamente.
-  Si hay un signo de + o - debes cambiarlo por la palabra "mas" o "menos" respectivamente.
-  Si hay un signo de / debes cambiarlo por la palabra "por" respectivamente.
-  - Si dice USD debes cambiarlo por "dolares"
-  - Si dice EUR debes cambiarlo por "euros"
-  en cuando a los numeros:
-  - si hay un numero como 100.000 debes cambiarlo por "cien mil"
-  - si hay un numero como 1.000.000 debes cambiarlo por "un millon"
-  - si est la palabra m2 debes cambiarlo por "metros cuadrados"
-  - si hay un numero como 1.5 debes cambiarlo por "uno punto cinco"
-  - Si dice 2 hab. debes cambiarlo por "dos habitaciones"
-  - Si dice 2 baños debes cambiarlo por "dos baños"
-  - sis dice MYM debes cambiarlo por "inmobiliaria EME Y EME"
-  - las siglas deben cambiarse por la palabra completa, por ejemplo: si dice "AI" debes cambiarlo por "inteligencia artificial", si dice "CRM" debes cambiarlo por "sistema de gestión de clientes"
-  y asi con cada simbolo o palabra que no entienda el agente de voz.
+// const systemPromt = new SystemMessage(
+//   `Eres un evaluador de respuestas  y debes resumir y estructurar ésta respuesta para que sea procesada por un agente de voz, es decir, que el texto que respondas de esta evaluacion del mensaje debe ser breve, claro y conciso, como si fuera una charla real, sin tecnicismos ni emojis.
+//   Tu respuesta va a ser hablada directamente al usuario por ende no debes usar emojis ni tecnicismos, solo lo que el usuario necesita saber.
+//   Además debes modificar ciertas palabras o simbolos para que el agente de voz lo entienda.
+//   Por ejemplo: si en el mensaje hay un signo de $ o de €, debes cambiarlo por la palabra "euros" o "dolares" respectivamente.
+//   Si hay un signo de % debes cambiarlo por la palabra "porciento" o "porcentaje" respectivamente.
+//   Si hay un signo de + o - debes cambiarlo por la palabra "mas" o "menos" respectivamente.
+//   Si hay un signo de / debes cambiarlo por la palabra "por" respectivamente.
+//   - Si dice USD debes cambiarlo por "dolares"
+//   - Si dice EUR debes cambiarlo por "euros"
+//   en cuando a los numeros:
+//   - si hay un numero como 100.000 debes cambiarlo por "cien mil"
+//   - si hay un numero como 1.000.000 debes cambiarlo por "un millon"
+//   - si est la palabra m2 debes cambiarlo por "metros cuadrados"
+//   - si hay un numero como 1.5 debes cambiarlo por "uno punto cinco"
+//   - Si dice 2 hab. debes cambiarlo por "dos habitaciones"
+//   - Si dice 2 baños debes cambiarlo por "dos baños"
+//   - sis dice MYM debes cambiarlo por "inmobiliaria EME Y EME"
+//   - las siglas deben cambiarse por la palabra completa, por ejemplo: si dice "AI" debes cambiarlo por "inteligencia artificial", si dice "CRM" debes cambiarlo por "sistema de gestión de clientes"
+//   y asi con cada simbolo o palabra que no entienda el agente de voz.
   
-  `
-)
+//   `
+// )
 
 function shouldContinue(
   state: typeof newState.State,
@@ -501,163 +501,163 @@ function shouldContinue(
 //   },
 // ];
 
-const humanNodeBooking = (lastMessage: AIMessage) => {
-  if (lastMessage.tool_calls) {
-    const toolArgs = lastMessage.tool_calls[0].args as {
-      name: string;
-      start: string;
-      email: string;
-    };
-    const { name, start, email } = toolArgs;
-    const actionRequest: ActionRequest = {
-      action: "Confirma la reserva",
-      args: toolArgs,
-    };
+// const humanNodeBooking = (lastMessage: AIMessage) => {
+//   if (lastMessage.tool_calls) {
+//     const toolArgs = lastMessage.tool_calls[0].args as {
+//       name: string;
+//       start: string;
+//       email: string;
+//     };
+//     const { name, start, email } = toolArgs;
+//     const actionRequest: ActionRequest = {
+//       action: "Confirma la reserva",
+//       args: toolArgs,
+//     };
 
     
 
-    const date = new Date(start);
+//     const date = new Date(start);
 
-      // Fecha y hora completas
-        const stringNormalized = 
-        date.toLocaleString('es-ES', {
-          day:   '2-digit',
-          month: '2-digit',
-          year:  'numeric',
-          hour:   '2-digit',
-          minute: '2-digit',
-          hour12: false
-        });
+//       // Fecha y hora completas
+//         const stringNormalized = 
+//         date.toLocaleString('es-ES', {
+//           day:   '2-digit',
+//           month: '2-digit',
+//           year:  'numeric',
+//           hour:   '2-digit',
+//           minute: '2-digit',
+//           hour12: false
+//         });
 
 
 
-    const description = `Por favor, confirma la reserva de la propiedad con los siguientes parámetros: ${JSON.stringify(
-      {
-        name,
-        stringNormalized,
-        email,
-      },
-    )}`;
+//     const description = `Por favor, confirma la reserva de la propiedad con los siguientes parámetros: ${JSON.stringify(
+//       {
+//         name,
+//         stringNormalized,
+//         email,
+//       },
+//     )}`;
 
-    const interruptConfig: HumanInterruptConfig = {
-      allow_ignore: false, // Allow the user to `ignore` the interrupt
-      allow_respond: false, // Allow the user to `respond` to the interrupt
-      allow_edit: true, // Allow the user to `edit` the interrupt's args
-      allow_accept: true, // Allow the user to `accept` the interrupt's args
-    };
+//     const interruptConfig: HumanInterruptConfig = {
+//       allow_ignore: false, // Allow the user to `ignore` the interrupt
+//       allow_respond: false, // Allow the user to `respond` to the interrupt
+//       allow_edit: true, // Allow the user to `edit` the interrupt's args
+//       allow_accept: true, // Allow the user to `accept` the interrupt's args
+//     };
 
-    const request: HumanInterrupt = {
-      action_request: actionRequest,
-      config: interruptConfig,
-      description,
-    };
+//     const request: HumanInterrupt = {
+//       action_request: actionRequest,
+//       config: interruptConfig,
+//       description,
+//     };
 
-    const humanResponse = interrupt<HumanInterrupt[], HumanResponse[]>([
-      request,
-    ])[0];
+//     const humanResponse = interrupt<HumanInterrupt[], HumanResponse[]>([
+//       request,
+//     ])[0];
 
-    if (humanResponse.type === "response") {
-      const message = `User responded with: ${humanResponse.args}`;
-      return { interruptResponse: message, humanResponse: humanResponse.args };
-    } else if (humanResponse.type === "accept") {
-      const message = `User accepted with: ${JSON.stringify(humanResponse.args)}`;
-      return { interruptResponse: message, humanResponse: humanResponse };
-    } else if (humanResponse.type === "edit") {
-      const message = `User edited with: ${JSON.stringify(humanResponse.args)}`;
-      return { interruptResponse: message, humanResponse: humanResponse.args };
-    } else if (humanResponse.type === "ignore") {
-      const message = "User ignored interrupt.";
-      return { interruptResponse: message, humanResponse: humanResponse };
-    }
+//     if (humanResponse.type === "response") {
+//       const message = `User responded with: ${humanResponse.args}`;
+//       return { interruptResponse: message, humanResponse: humanResponse.args };
+//     } else if (humanResponse.type === "accept") {
+//       const message = `User accepted with: ${JSON.stringify(humanResponse.args)}`;
+//       return { interruptResponse: message, humanResponse: humanResponse };
+//     } else if (humanResponse.type === "edit") {
+//       const message = `User edited with: ${JSON.stringify(humanResponse.args)}`;
+//       return { interruptResponse: message, humanResponse: humanResponse.args };
+//     } else if (humanResponse.type === "ignore") {
+//       const message = "User ignored interrupt.";
+//       return { interruptResponse: message, humanResponse: humanResponse };
+//     }
 
-    return {
-      interruptResponse:
-        "Unknown interrupt response type: " + JSON.stringify(humanResponse),
-    };
-  }
-};
+//     return {
+//       interruptResponse:
+//         "Unknown interrupt response type: " + JSON.stringify(humanResponse),
+//     };
+//   }
+// };
 
-const humanNode = (lastMessage: any) => {
-  const toolArgs = lastMessage.tool_calls[0].args as {
-    habitaciones: string | null;
-    precio_aproximado: string;
-    zona: string;
-    superficie_total: string | null;
-    piscina: "si" | "no" | null;
-    tipo_operacion: "venta" | "alquiler";
-  };
+// const humanNode = (lastMessage: any) => {
+//   const toolArgs = lastMessage.tool_calls[0].args as {
+//     habitaciones: string | null;
+//     precio_aproximado: string;
+//     zona: string;
+//     superficie_total: string | null;
+//     piscina: "si" | "no" | null;
+//     tipo_operacion: "venta" | "alquiler";
+//   };
 
-  const {
-    habitaciones,
-    precio_aproximado,
-    zona,
-    piscina,
-    superficie_total,
-    tipo_operacion,
-  } = toolArgs;
+//   const {
+//     habitaciones,
+//     precio_aproximado,
+//     zona,
+//     piscina,
+//     superficie_total,
+//     tipo_operacion,
+//   } = toolArgs;
 
-  // Define the interrupt request
-  const actionRequest: ActionRequest = {
-    action: "Confirma la búsqueda",
-    args: toolArgs,
-  };
+//   // Define the interrupt request
+//   const actionRequest: ActionRequest = {
+//     action: "Confirma la búsqueda",
+//     args: toolArgs,
+//   };
 
-  const description = `Por favor, confirma la búsqueda de propiedades con los siguientes parámetros: ${JSON.stringify(
-    {
-      habitaciones,
-      precio_aproximado,
-      zona,
-      piscina,
-      superficie_total,
-      tipo_operacion,
-    },
-  )}`;
+//   const description = `Por favor, confirma la búsqueda de propiedades con los siguientes parámetros: ${JSON.stringify(
+//     {
+//       habitaciones,
+//       precio_aproximado,
+//       zona,
+//       piscina,
+//       superficie_total,
+//       tipo_operacion,
+//     },
+//   )}`;
 
-  const interruptConfig: HumanInterruptConfig = {
-    allow_ignore: false, // Allow the user to `ignore` the interrupt
-    allow_respond: false, // Allow the user to `respond` to the interrupt
-    allow_edit: true, // Allow the user to `edit` the interrupt's args
-    allow_accept: true, // Allow the user to `accept` the interrupt's args
-  };
+//   const interruptConfig: HumanInterruptConfig = {
+//     allow_ignore: false, // Allow the user to `ignore` the interrupt
+//     allow_respond: false, // Allow the user to `respond` to the interrupt
+//     allow_edit: true, // Allow the user to `edit` the interrupt's args
+//     allow_accept: true, // Allow the user to `accept` the interrupt's args
+//   };
 
-  const request: HumanInterrupt = {
-    action_request: actionRequest,
-    config: interruptConfig,
-    description,
-  };
+//   const request: HumanInterrupt = {
+//     action_request: actionRequest,
+//     config: interruptConfig,
+//     description,
+//   };
 
-  const humanResponse = interrupt<HumanInterrupt[], HumanResponse[]>([
-    request,
-  ])[0];
-  console.log("request: ", request);
+//   const humanResponse = interrupt<HumanInterrupt[], HumanResponse[]>([
+//     request,
+//   ])[0];
+//   console.log("request: ", request);
 
-  console.log("humanResponse: ", humanResponse);
+//   console.log("humanResponse: ", humanResponse);
 
-  if (humanResponse.type === "response") {
-    const message = `User responded with: ${humanResponse.args}`;
-    return { interruptResponse: message, humanResponse: humanResponse.args };
-  } else if (humanResponse.type === "accept") {
-    const message = `User accepted with: ${JSON.stringify(humanResponse.args)}`;
-    return { interruptResponse: message, humanResponse: humanResponse };
-  } else if (humanResponse.type === "edit") {
-    const message = `User edited with: ${JSON.stringify(humanResponse.args)}`;
-    return { interruptResponse: message, humanResponse: humanResponse.args };
-  } else if (humanResponse.type === "ignore") {
-    const message = "User ignored interrupt.";
-    return { interruptResponse: message, humanResponse: humanResponse };
-  }
+//   if (humanResponse.type === "response") {
+//     const message = `User responded with: ${humanResponse.args}`;
+//     return { interruptResponse: message, humanResponse: humanResponse.args };
+//   } else if (humanResponse.type === "accept") {
+//     const message = `User accepted with: ${JSON.stringify(humanResponse.args)}`;
+//     return { interruptResponse: message, humanResponse: humanResponse };
+//   } else if (humanResponse.type === "edit") {
+//     const message = `User edited with: ${JSON.stringify(humanResponse.args)}`;
+//     return { interruptResponse: message, humanResponse: humanResponse.args };
+//   } else if (humanResponse.type === "ignore") {
+//     const message = "User ignored interrupt.";
+//     return { interruptResponse: message, humanResponse: humanResponse };
+//   }
 
-  return {
-    interruptResponse:
-      "Unknown interrupt response type: " + JSON.stringify(humanResponse),
-  };
-};
+//   return {
+//     interruptResponse:
+//       "Unknown interrupt response type: " + JSON.stringify(humanResponse),
+//   };
+// };
 
-interface booking {
-  name: string;
-  start: string;
-  email: string;
-}
+// interface booking {
+//   name: string;
+//   start: string;
+//   email: string;
+// }
 
 interface pisosToolArgs {
   habitaciones: string | null;
