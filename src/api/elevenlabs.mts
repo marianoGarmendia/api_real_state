@@ -44,7 +44,7 @@ elevenlabs.post('/v1/chat/completions', async (c) => {
       }
     );
   }
-  let thread_id = "1235"
+  let thread_id = "25635"
  
   
 
