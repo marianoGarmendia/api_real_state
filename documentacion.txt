@@ -1,0 +1,311 @@
+const response = await workflow.stream({messages:"Dime, tienes propiedades en gavamar de 2 dormitorios?"}, {
+  configurable: { thread_id: "123" },
+  
+  streamMode: "messages" as const,
+})
+
+for await (const event of response) {
+console.log(event);
+
+
+}
+
+Esto devuelve en cada "event" un array con esta inforamcion, donde dentro de content estn los chunk de string de la respuesta
+
+[
+  AIMessageChunk {
+    "id": "chatcmpl-BiQDGhLojowiW2XkyVpav5vrOkTot",
+    "content": " característica",
+    "additional_kwargs": {},
+    "response_metadata": {
+      "usage": {}
+    },
+    "tool_calls": [],
+    "tool_call_chunks": [],
+    "invalid_tool_calls": []
+  },
+  {
+    tags: [],
+    name: undefined,
+    thread_id: '123',
+    langgraph_step: 1,
+    langgraph_node: 'agent',
+    langgraph_triggers: [ 'branch:to:agent' ],
+    langgraph_path: [ '__pregel_pull', 'agent' ],
+    langgraph_checkpoint_ns: 'agent:892f27d5-4b60-59ed-aae7-ba12b4802cbb',
+    __pregel_task_id: '892f27d5-4b60-59ed-aae7-ba12b4802cbb',
+    checkpoint_ns: 'agent:892f27d5-4b60-59ed-aae7-ba12b4802cbb',
+    ls_provider: 'openai',
+    ls_model_name: 'gpt-4o',
+    ls_model_type: 'chat',
+    ls_temperature: 0,
+    ls_max_tokens: undefined,
+    ls_stop: undefined
+  }
+]
+
+
+---------------------------------------------------
+
+const input = {
+  messages: {
+  role: "user",
+  content: "Hola, estoy buscando una propiedad en venta, me gustaría saber que tienen disponible.",
+  }
+}
+
+const configStream = {
+  configurable: { thread_id: "123" },
+  version: "v2" as const
+}
+
+const stream =  workflow.streamEvents(input, configStream)
+
+for await (const message of stream) {
+  console.dir(
+    {
+      event: message.event,
+      messages: message.data,
+    },
+    {
+      depth: 3,
+    },
+  );  
+}
+
+
+esto devuelve:
+
+{
+  event: 'on_chat_model_stream',
+  messages: {
+    chunk: AIMessageChunk {
+      lc_serializable: true,
+      lc_kwargs: {
+        content: ' opciones',
+        tool_call_chunks: [],
+        additional_kwargs: {},
+        id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+        response_metadata: [Object],
+        tool_calls: [],
+        invalid_tool_calls: [],
+        usage_metadata: undefined
+      },
+      lc_namespace: [ 'langchain_core', 'messages' ],
+      content: ' opciones',
+      name: undefined,
+      additional_kwargs: {},
+      response_metadata: { usage: {} },
+      id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+      tool_calls: [],
+      invalid_tool_calls: [],
+      tool_call_chunks: [],
+      usage_metadata: undefined
+    }
+  }
+}
+.....
+*Muchos eventos mas por cada chunk de string*
+.....
+{
+  event: 'on_chat_model_stream',
+  messages: {
+    chunk: AIMessageChunk {
+      lc_serializable: true,
+      lc_kwargs: {
+        content: '.',
+        tool_call_chunks: [],
+        additional_kwargs: {},
+        id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+        response_metadata: [Object],
+        tool_calls: [],
+        invalid_tool_calls: [],
+        usage_metadata: undefined
+      },
+      lc_namespace: [ 'langchain_core', 'messages' ],
+      content: '.',
+      name: undefined,
+      additional_kwargs: {},
+      response_metadata: { usage: {} },
+      id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+      tool_calls: [],
+      invalid_tool_calls: [],
+      tool_call_chunks: [],
+      usage_metadata: undefined
+    }
+  }
+}
+{
+  event: 'on_chat_model_stream',
+  messages: {
+    chunk: AIMessageChunk {
+      lc_serializable: true,
+      lc_kwargs: {
+        content: '',
+        tool_call_chunks: [],
+        additional_kwargs: {},
+        id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+        response_metadata: [Object],
+        tool_calls: [],
+        invalid_tool_calls: [],
+        usage_metadata: undefined
+      },
+      lc_namespace: [ 'langchain_core', 'messages' ],
+      content: '',
+      name: undefined,
+      additional_kwargs: {},
+      response_metadata: { usage: {} },
+      id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+      tool_calls: [],
+      invalid_tool_calls: [],
+      tool_call_chunks: [],
+      usage_metadata: undefined
+    }
+  }
+}
+{
+  event: 'on_chat_model_end',
+  messages: {
+    output: AIMessageChunk {
+      lc_serializable: true,
+      lc_kwargs: {
+        content: '¡Hola! Para ayudarte mejor, ¿podrías decirme en qué zona estás interesado? También sería útil saber tu presupuesto aproximado y cuántas habitaciones necesitas. Así podré buscar opciones que se ajusten a tus preferencias.',
+        additional_kwargs: {},
+        response_metadata: [Object],
+        tool_call_chunks: [],
+        id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+        usage_metadata: [Object],
+        tool_calls: [],
+        invalid_tool_calls: []
+      },
+      lc_namespace: [ 'langchain_core', 'messages' ],
+      content: '¡Hola! Para ayudarte mejor, ¿podrías decirme en qué zona estás interesado? También sería útil saber tu presupuesto aproximado y cuántas habitaciones necesitas. Así podré buscar opciones que se ajusten a tus preferencias.',
+      name: undefined,
+      additional_kwargs: {},
+      response_metadata: { usage: [Object] },
+      id: 'chatcmpl-BiQFwQaAJpAmUmdWAqOoh1UN2qWaq',
+      tool_calls: [],
+      invalid_tool_calls: [],
+      tool_call_chunks: [],
+      usage_metadata: {
+        input_tokens: 3622,
+        output_tokens: 48,
+        total_tokens: 3670,
+        input_token_details: [Object],
+        output_token_details: [Object]
+      }
+    },
+    input: { messages: [ [Array] ] }
+  }
+}
+{
+  event: 'on_chain_start',
+  messages: { input: { messages: [ [AIMessageChunk] ] } }
+}
+{
+  event: 'on_chain_end',
+  messages: {
+    output: { messages: [ [AIMessageChunk] ] },
+    input: { messages: [ [AIMessageChunk] ] }
+  }
+}
+{
+  event: 'on_chain_start',
+  messages: { input: { messages: [ [HumanMessage], [AIMessageChunk] ], ui: [] } }
+}
+end of conversation
+{
+  event: 'on_chain_end',
+  messages: {
+    output: '__end__',
+    input: { messages: [ [HumanMessage], [AIMessageChunk] ], ui: [] }
+  }
+}
+{
+  event: 'on_chain_end',
+  messages: {
+    output: { messages: [ [AIMessageChunk] ] },
+    input: { messages: [ [HumanMessage] ], ui: [] }
+  }
+}
+{
+  event: 'on_chain_stream',
+  messages: { chunk: { agent: { messages: [Array] } } }
+}
+{
+  event: 'on_chain_end',
+  messages: {
+    output: { messages: [ [HumanMessage], [AIMessageChunk] ], ui: [] }
+  }
+}
+
+----------------------------------------------------
+
+
+const response = await workflow.stream({messages:"Dime, tienes propiedades en gavamar de 2 dormitorios?"}, {
+  configurable: { thread_id: "123" },
+  
+  streamMode: "updates" as const,
+})
+
+for await (const event of response) {
+console.log(event);
+
+
+}
+
+esto devuelve la actualizaciopn de cada nodo.. es decir el ultimo mensaje de cada nodo que paso.. si hubiese tenido un toolMessage devolveria el toolmessage de ese nodo
+y despues nuevamente la actualziacion del nodo callModel 
+
+
+{
+  agent: {
+    messages: [
+      AIMessage {
+        "id": "chatcmpl-BiQHpjye8bystaJgvX9UVDHbg36lr",
+        "content": "Claro, puedo buscar propiedades en Gavà Mar con 2 dormitorios para ti. ¿Hay alguna otra característica que te gustaría considerar, como el precio, los metros cuadrados o si tiene piscina? Esto me ayudará a encontrar las mejores opciones para ti.",
+        "additional_kwargs": {},
+        "response_metadata": {
+          "tokenUsage": {
+            "promptTokens": 3616,
+            "completionTokens": 50,
+            "totalTokens": 3666
+          },
+          "finish_reason": "stop",
+          "model_name": "gpt-4o-2024-08-06",
+          "usage": {
+            "prompt_tokens": 3616,
+            "completion_tokens": 50,
+            "total_tokens": 3666,
+            "prompt_tokens_details": {
+              "cached_tokens": 0,
+              "audio_tokens": 0
+            },
+            "completion_tokens_details": {
+              "reasoning_tokens": 0,
+              "audio_tokens": 0,
+              "accepted_prediction_tokens": 0,
+              "rejected_prediction_tokens": 0
+            }
+          },
+          "system_fingerprint": "fp_9bddfca6e2"
+        },
+        "tool_calls": [],
+        "invalid_tool_calls": [],
+        "usage_metadata": {
+          "output_tokens": 50,
+          "input_tokens": 3616,
+          "total_tokens": 3666,
+          "input_token_details": {
+            "audio": 0,
+            "cache_read": 0
+          },
+          "output_token_details": {
+            "audio": 0,
+            "reasoning": 0
+          }
+        }
+      }
+    ]
+  }
+}

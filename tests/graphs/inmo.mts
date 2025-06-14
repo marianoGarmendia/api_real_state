@@ -43,6 +43,8 @@ import { INMUEBLE_PROPS } from "./products_finder/schemas.mjs";
 import { productsFinder } from "./products_finder/tools.mjs";
 import {obtener_info_usuario} from './agent/tools.mjs';
 import { contextPrompt } from "./agent/context.mjs";
+import { config } from "dotenv";
+config();
 
 
 export const empresa = {
@@ -275,11 +277,11 @@ Tu estilo es cálido, profesional y sobre todo **persuasivo pero no invasivo**. 
   // const tokens = encode(cadenaJSON);
   // const numeroDeTokens = tokens.length;
 
-  console.log("messages ", response);
+  // console.log("messages ", response);
 
   // console.log(`Número de tokens: ${numeroDeTokens}`);
 
-  return { messages: [...messages, response] };
+  return { messages: [response] };
 
   // console.log(messages, response);
 
@@ -564,6 +566,8 @@ const toolNodo = async (
   config: LangGraphRunnableConfig,
 ) => {
   const { messages } = state;
+  console.log("config run id: ", config?.runId);
+  
   const ui = typedUi(config);
   const lastMessage = messages[messages.length - 1] as AIMessage;
   console.log("toolNodo");
@@ -674,7 +678,7 @@ const toolNodo = async (
           toolCallId: tool_call_id,
         },
         metadata: {
-          message_id: lastMessageID,
+          message_id: lastMessageID as string || tool_call_id,
         },
       });
     }
@@ -693,9 +697,9 @@ const toolNodo = async (
         lastMessage.id as string,
         "error",
       );
-      return { messages: [...messages, toolMessage] };
+      return { messages: [ toolMessage] };
     } else {
-      return { messages: [...messages, ...toolMessages] };
+      return { messages: [...toolMessages] };
     }
   }
   // tools.forEach((tool) => {
@@ -705,7 +709,7 @@ const toolNodo = async (
   // });
   // console.log("toolMessage: ", toolMessage);
 //@ts-ignore
-  return { ui: ui.items, messages: [...messages, toolMessage]  , timestamp: Date.now() };
+  return { ui: ui.items, messages: [toolMessage]  , timestamp: Date.now() };
 };
 
 // const delete_messages = async (state: typeof newState.State) => {
@@ -792,9 +796,56 @@ graph
 const checkpointer = new MemorySaver();
 
 export const workflow = graph.compile({ checkpointer });
-// let config = { configurable: { thread_id: "123" } };
+// const configStream = {
+//   configurable: { thread_id: "123" },
+//   version: "v2" as const
+// }
 
-// const response = await workflow.invoke({messages:"dame las noticias ams relevantes de este 2025"}, config)
+const response = await workflow.stream({messages:"Dime, tienes propiedades en gavamar de 2 dormitorios, tengo un presupuesto de 400 mil euros, no quiero que tenga piscina, solo esos son mis requisitos , por favor buscame algo de esas caracteristicas"}, {
+  configurable: { thread_id: "123" },
+  
+  streamMode: "values" as const,
+})
+
+for await (const event of response) {
+console.log(event);
+
+
+}
+
+// console.log("response:" , response);
+
+
+
+// STREAM EVENTS
+
+// const input = {
+//   messages: {
+//   role: "user",
+//   content: "Hola, estoy buscando una propiedad en venta, me gustaría saber que tienen disponible.",
+//   }
+// }
+
+// const configStream = {
+//   configurable: { thread_id: "123" },
+//   version: "v2" as const
+// }
+
+// const stream =  workflow.streamEvents(input, configStream)
+
+// for await (const message of stream) {
+//   console.dir(
+//     {
+//       event: message.event,
+//       messages: message.data,
+//     },
+//     {
+//       depth: 3,
+//     },
+//   );  
+// }
+
+
 
 // console.log("response: ", response);
 

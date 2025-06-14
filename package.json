@@ -13,6 +13,7 @@
   "scripts": {
     "clean": "npx -y bun scripts/clean.mjs",
     "build": "tsc",
+    "conversational": "npx tsx ./tests/server.mts ",
     "dev": "tsx ./tests/utils.server.mts --dev",
     "start": "tsx ./tests/utils.server.mts --dev",
     "prepack": "pnpm run build",
